@@ -1,0 +1,2 @@
+# Fightbot
+Fightbot for Discord
