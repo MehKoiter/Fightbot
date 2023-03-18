@@ -13,8 +13,8 @@ require('dotenv/config')
         console.log('bot is ready')
     } )
     client.on('messageCreate', message => {
-        if (message.content === 'ping'){
-            message.reply('pong')
+        if (message.content === '#fights'){
+            message.reply('UFC 286 is this weekend')
         }
     })
 
