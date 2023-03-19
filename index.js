@@ -24,7 +24,7 @@ require('dotenv/config')
 //            message.reply('https://www.ufc.com/events')
 //        }
 //    })
-    module.exprots = {
+    module.exports = {
         data: new SlashCommandBuilder()
             .setName('fight')
             .setDescription('This weekends fight if there is one'),
