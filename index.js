@@ -1,7 +1,7 @@
 // import fetchEvents from './fetchEvents.js';
 // setting requirements for index.js to run
-// GatewauIntentBits is the language used for discord.js to know what things to monitor.
-const { Client, GatewayIntentBits } = require('discord.js')
+// GatewauIntentBits is the language used for discord.js to know what things to monitor
+const { Client, GatewayIntentBits, SlashCommandBuilder } = require('discord.js')
 require('dotenv/config')
 
     const client = new Client({
@@ -18,13 +18,20 @@ require('dotenv/config')
         console.log('bot is ready')
     } )
 // monitoring content on pages, to look for an input
-    client.on('messageCreate', message => {
-        if (message.content === '/fights'){
-            fetchEvents();
-            message.reply('https://www.ufc.com/events')
-        }
-    })
-
+//    client.on('messageCreate', message => {
+//        if (message.content === '/fights'){
+//           fetchEvents();
+//            message.reply('https://www.ufc.com/events')
+//        }
+//    })
+    module.exprots = {
+        data: new SlashCommandBuilder()
+            .setName('fight')
+            .setDescription('This weekends fight if there is one'),
+        async execute(interaction) {
+                await interaction.reply('https://www.ufc.com/events');
+        },
+    };
     client.login(process.env.TOKEN)
 
     async function fetchEvents(){
