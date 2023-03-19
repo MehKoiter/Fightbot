@@ -1,4 +1,6 @@
 // import fetchEvents from './fetchEvents.js';
+// setting requirements for index.js to run
+// GatewauIntentBits is the language used for discord.js to know what things to monitor.
 const { Client, GatewayIntentBits } = require('discord.js')
 require('dotenv/config')
 
@@ -7,12 +9,15 @@ require('dotenv/config')
             GatewayIntentBits.Guilds,
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.MessageContent,
+            GatewayIntentBits.DirectMessageTyping,
+
         ]
     })
-
+// setting a consol log to tell us when the bot is ready
     client.on('ready',()=> {
         console.log('bot is ready')
     } )
+// monitoring content on pages, to look for an input
     client.on('messageCreate', message => {
         if (message.content === '/fights'){
             fetchEvents();
