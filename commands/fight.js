@@ -5,6 +5,10 @@ const { SlashCommandBuilder } = require('discord.js');
             .setName('fight')
             .setDescription('This weekends fight if there is one'),
         async execute(interaction) {
-                await interaction.reply('https://www.ufc.com/events');
+                axios.get('https://www.ufc.com/events')
+                .then((res) => console.log(res))
+                .catch((err) => console.log(err))
+
+                //await interaction.reply('https://www.ufc.com/events');
         },
     };
