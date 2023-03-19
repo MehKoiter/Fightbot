@@ -1,6 +1,8 @@
 // import fetchEvents from './fetchEvents.js';
 // setting requirements for index.js to run
 // GatewauIntentBits is the language used for discord.js to know what things to monitor
+
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
@@ -15,13 +17,15 @@ const { token } = require('./config.json');
 
         ]
     })
-    client.login(process.env.TOKEN);
-// creating a new collection type or list
+
+
+    // creating a new collection type or list
     client.commands = new Collection();
     const commandsPath = path.join(__dirname, 'commands');
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-    
-// creates the path for the commandFiles
+
+
+    // creates the path for the commandFiles
     for (const file of commandFiles) {
         const filePath = path.join(commandsPath, file);
         const command = require(filePath);
@@ -33,7 +37,11 @@ const { token } = require('./config.json');
         }
     }
 
-// setting a consol log to tell us when the bot is ready
+
+    const rest = new REST({ version: '10' }).setToken(token);
+
+
+    // setting a consol log to tell us when the bot is ready
     client.on(Events.InteractionCreate, async interaction => {
         if (!interaction.isChatInputCommand()) return;
 
@@ -47,7 +55,7 @@ const { token } = require('./config.json');
         try {
             await command.execute(interaction);
         } catch (error) {
-            console.error(error);
+            console.error('Bad error!' + error);
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
             } else {
