@@ -1,17 +1,20 @@
-const { REST, Routes } = require('discord.js');
-const { clientId, guildId, token } = require('./config.json');
-const fs = require('node:fs');
-const path = require('node:path');
+import { REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { clientId, guildId, token } from './config.js';
+import fightCommand from './commands/fight.js'
+import fs from 'node:fs';
+import path from 'node:path';
 
 const commands = [];
 // Grab all the command files from the commands directory you created earlier
-const commandsPath = path.join(__dirname, 'commands');
+const commandsPath = path.join('./commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
 // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
 for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
-	commands.push(command.data.toJSON());
+	// Test using 1 then make dynamic path
+	//const command = await import('./commands/fight.js');
+	console.log(fightCommand.data);
+	commands.push(JSON.stringify(fightCommand.data));
 }
 
 // Construct and prepare an instance of the REST module

@@ -1,16 +1,9 @@
-const { SlashCommandBuilder, InteractionHandler } = require('discord.js');
-const { Axios } = require('axios');
-const { Cheerio } = require('cheerio');
+import { SlashCommandBuilder } from "discord.js";
 
-    module.exports = {
-        data: new SlashCommandBuilder()
-            .setName('fight')
-            .setDescription('This weekends fight if there is one'),
-        async execute(interaction) {
-                Axios.get('https://www.ufc.com/events')
-                .then((res) => console.log(res))
-                .catch((err) => console.log(err))
+export default {
+    data: new SlashCommandBuilder()
+        .setName('fight')
+        .setDescription('This weekends fight if there is one'), 
+        async execute(interaction) {await interaction.reply('https://www.ufc.com/events')},
+};
 
-                //await interaction.reply('https://www.ufc.com/events');
-        },
-    };
