@@ -1,6 +1,5 @@
-import { REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { REST, Routes } from 'discord.js';
 import { clientId, guildId, token } from './config.js';
-import fightCommand from './commands/fight.js'
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -11,10 +10,8 @@ const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('
 
 // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
 for (const file of commandFiles) {
-	// Test using 1 then make dynamic path
-	//const command = await import('./commands/fight.js');
-	console.log(fightCommand.data);
-	commands.push(JSON.stringify(fightCommand.data));
+	const command = await import(`./commands/${file}`);
+	commands.push(JSON.stringify(command));
 }
 
 // Construct and prepare an instance of the REST module
