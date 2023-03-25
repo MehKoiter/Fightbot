@@ -4,11 +4,13 @@
 
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { token } from './config.js';
-import handleCommand from './services/interactionHandler.js';
+import interactionHandler from './services/interactionHandler.js';
 import fs from 'node:fs';
 import path from'node:path';
 
-    client = new Client({
+    const handler = new interactionHandler();
+
+    const client = new Client({
         intents: [
             GatewayIntentBits.Guilds,
             GatewayIntentBits.GuildMessages,
@@ -19,26 +21,24 @@ import path from'node:path';
 
     
     client.commands = new Collection();
-    commandsPath = path.join(__dirname, 'commands');
-    commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-    for (file of commandFiles) {
-        filePath = path.join(commandsPath, file);
-        command = require(filePath);
+    const commandsPath = path.join('./commands');
+    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+    for (let file of commandFiles) {
+        const command = (await import(`./commands/${file}`)).default;
         client.commands.set(command.data.name, command);
     }
 
 
     // creating a new collection type or list
-    eventsPath = path.join(__dirname, 'events');
-    eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+    const eventsPath = path.join('./events');
+    const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
-    for (file of eventFiles) {
-        filePath = path.join(eventsPath, file);
-        discordEvent = require(filePath);
+    for (let file of eventFiles) {
+        const discordEvent = (await import(`./events/${file}`)).default;
         if (discordEvent.once) {
             client.once(discordEvent.name, (...args) => discordEvent.execute(...args));
         } else {
-            client.on(discordEvent.name, handleCommand);
+            client.on(discordEvent.name, () => console.log('here'));
         }
     }
 

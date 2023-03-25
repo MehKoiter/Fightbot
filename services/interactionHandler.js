@@ -1,6 +1,7 @@
-import { CommandInteraction, Interaction, MessageEmbed } from 'discord.js';
-import { Event, parseEvent, parseEvents } from './fightParser';
-import { fetchEvents } from './ufcService';
+import discordjs from 'discord.js';
+const { CommandInteraction, Interaction, MessageEmbed } = discordjs;
+import { Event, fightParser } from './fightParser.js';
+import ufcService from './ufcService.js';
 
 export default class interactionHandler {
 
@@ -41,8 +42,8 @@ export default class interactionHandler {
    */
   async getFightLinks() {
     try {
-      eventHtml = await fetchEvents();
-      links = parseEvents(eventHtml);
+      eventHtml = await ufcService.fetchEvents();
+      links = fightParser.parseEvents(eventHtml);
       return links;
     } catch (error) {
       this.logger.error(
@@ -66,8 +67,8 @@ export default class interactionHandler {
     // }
     // const [link] = links;
 
-    eventHtml = await fetchEvents(link);
-    ufcEvent = parseEvent(eventHtml);
+    eventHtml = await ufcService.fetchEvents(link);
+    ufcEvent = fightParser.parseEvent(eventHtml);
 
     await interaction.reply({ embeds: [this.buildFightEmbed(ufcEvent)] });
   }
