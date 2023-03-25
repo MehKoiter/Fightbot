@@ -4,6 +4,7 @@ export default {
     data: new SlashCommandBuilder()
         .setName('fight')
         .setDescription('This weekends fight if there is one'), 
-    execute: async (interaction) => {await interaction.reply('https://www.ufc.com/events')},
+    execute: async (interaction) => {
+        await interaction.reply('https://www.ufc.com/events')
+    },
 };
-

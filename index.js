@@ -38,7 +38,7 @@ import path from'node:path';
         if (discordEvent.once) {
             client.once(discordEvent.name, (...args) => discordEvent.execute(...args));
         } else {
-            client.on(discordEvent.name, () => console.log('here'));
+            client.on(discordEvent.name, (...args) => discordEvent.execute(...args));
         }
     }
 
