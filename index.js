@@ -8,7 +8,9 @@ import interactionHandler from './services/interactionHandler.js';
 import fs from 'node:fs';
 import path from'node:path';
 
+
     const handler = new interactionHandler();
+
 
     const client = new Client({
         intents: [
@@ -19,7 +21,7 @@ import path from'node:path';
         ]
     })
 
-    
+
     client.commands = new Collection();
     const commandsPath = path.join('./commands');
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
