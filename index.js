@@ -43,6 +43,9 @@ import path from'node:path';
             client.on(discordEvent.name, (...args) => discordEvent.execute(...args));
         }
     }
-
-    client.user.setActivity('activity' , { type: ActivityType.Listening});
+    // set activity and activity type
+    client.on("ready", ()=> {
+        client.user.setActivity('for activity' , { type: ActivityType.Watching});
+    })
+    
     client.login(token);
