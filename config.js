@@ -1,0 +1,3 @@
+export const token = "OTU3MjkyNjYyOTY3MzczODc0.Gka9wt.p0LGnGCbz8r-0f6RBoiwBPzqmtBdtBL7hkZ4PM";
+export const clientId = "957292662967373874";
+export const guildId = "380479158314074113";

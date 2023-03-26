@@ -1,10 +1,10 @@
-const { SlashCommandBuilder } = require('discord.js');
+import { SlashCommandBuilder } from "discord.js";
 
-    module.exports = {
-        data: new SlashCommandBuilder()
-            .setName('fight')
-            .setDescription('This weekends fight if there is one'),
-        async execute(interaction) {
-                await interaction.reply('https://www.ufc.com/events');
-        },
-    };
+export default {
+    data: new SlashCommandBuilder()
+        .setName('fight')
+        .setDescription('This weekends fight if there is one'), 
+    execute: async (interaction) => {
+        await interaction.reply('https://www.ufc.com/events')
+    },
+};

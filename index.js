@@ -2,11 +2,15 @@
 // setting requirements for index.js to run
 // GatewauIntentBits is the language used for discord.js to know what things to monitor
 
+import { Client, Collection, GatewayIntentBits } from 'discord.js';
+import { token } from './config.js';
+import interactionHandler from './services/interactionHandler.js';
+import fs from 'node:fs';
+import path from'node:path';
 
-const fs = require('node:fs');
-const path = require('node:path');
-const { Client, Collection, GatewayIntentBits } = require('discord.js');
-const { token } = require('./config.json');
+
+    const handler = new interactionHandler();
+
 
     const client = new Client({
         intents: [
@@ -14,32 +18,29 @@ const { token } = require('./config.json');
             GatewayIntentBits.GuildMessages,
             GatewayIntentBits.MessageContent,
             GatewayIntentBits.DirectMessageTyping,
-
         ]
     })
 
 
     client.commands = new Collection();
-    const commandsPath = path.join(__dirname, 'commands');
+    const commandsPath = path.join('./commands');
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-    for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file);
-        const command = require(filePath);
+    for (let file of commandFiles) {
+        const command = (await import(`./commands/${file}`)).default;
         client.commands.set(command.data.name, command);
     }
 
 
     // creating a new collection type or list
-    const eventsPath = path.join(__dirname, 'events');
+    const eventsPath = path.join('./events');
     const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
-    for (const file of eventFiles) {
-        const filePath = path.join(eventsPath, file);
-        const event = require(filePath);
-        if (event.once) {
-            client.once(event.name, (...args) => event.execute(...args));
+    for (let file of eventFiles) {
+        const discordEvent = (await import(`./events/${file}`)).default;
+        if (discordEvent.once) {
+            client.once(discordEvent.name, (...args) => discordEvent.execute(...args));
         } else {
-            client.on(event.name, (...args) => event.execute(...args));
+            client.on(discordEvent.name, (...args) => discordEvent.execute(...args));
         }
     }
 

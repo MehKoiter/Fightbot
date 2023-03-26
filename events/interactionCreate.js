@@ -1,9 +1,8 @@
-    // setting a consol log to tell us when the bot is ready
-    const { Events } = require('discord.js');
+ import { Events } from 'discord.js';
 
-module.exports = {
+export default {
 	name: Events.InteractionCreate,
-	async execute(interaction) {
+	execute: async (interaction) => {
 		if (!interaction.isChatInputCommand()) return;
 
 		const command = interaction.client.commands.get(interaction.commandName);
