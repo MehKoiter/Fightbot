@@ -8,6 +8,10 @@ import interactionHandler from './services/interactionHandler.js';
 import fs from 'node:fs';
 import path from'node:path';
 
+    // set activity and activity type
+    client.on("ready", ()=> {
+        client.user.setActivity('for activity' , { type: ActivityType.Watching});
+    })
 
     const handler = new interactionHandler();
 
@@ -43,9 +47,6 @@ import path from'node:path';
             client.on(discordEvent.name, (...args) => discordEvent.execute(...args));
         }
     }
-    // set activity and activity type
-    client.on("ready", ()=> {
-        client.user.setActivity('for activity' , { type: ActivityType.Watching});
-    })
+
     
     client.login(token);
