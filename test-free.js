@@ -4,15 +4,11 @@
  */
 
 import UfcService from './services/ufcService.js';
-import BettingOddsService from './services/bettingOddsService.js';
-import UserPreferencesService from './services/userPreferencesService.js';
 import { VERSION_CONFIG, isFeatureEnabled, isPremium } from './config/version.js';
 
 class FightBotTester {
     constructor() {
         this.ufcService = new UfcService();
-        this.bettingService = new BettingOddsService();
-        this.userPrefs = new UserPreferencesService();
         this.testResults = [];
     }
 
@@ -22,8 +18,6 @@ class FightBotTester {
         
         await this.testVersionConfig();
         await this.testUfcService();
-        await this.testBettingService();
-        await this.testUserPreferences();
         await this.testFeatureFlags();
         
         this.printResults();
@@ -74,78 +68,6 @@ class FightBotTester {
         }
     }
 
-    async testBettingService() {
-        console.log('💰 Testing Betting Odds Service...');
-        
-        try {
-            // Test service initialization
-            this.assert(this.bettingService.sportsbooks.length > 0, 'Should have sportsbooks');
-            
-            // Create mock fight for testing
-            const mockFight = {
-                redCorner: { name: 'Fighter A' },
-                blueCorner: { name: 'Fighter B' },
-                weightClass: 'Lightweight'
-            };
-            
-            const odds = await this.bettingService.getFightOdds(mockFight);
-            
-            this.assert(odds, 'Should return odds data');
-            this.assert(odds.odds, 'Should have odds object');
-            this.assert(odds.odds.moneyline, 'Should have moneyline odds');
-            this.assert(typeof odds.odds.moneyline.red === 'number', 'Red odds should be number');
-            this.assert(typeof odds.odds.moneyline.blue === 'number', 'Blue odds should be number');
-            
-            // Test odds formatting
-            const formattedOdds = this.bettingService.formatOdds(150);
-            this.assert(formattedOdds === '+150', 'Should format positive odds correctly');
-            
-            const formattedNegativeOdds = this.bettingService.formatOdds(-150);
-            this.assert(formattedNegativeOdds === '-150', 'Should format negative odds correctly');
-            
-            console.log('✅ Betting Service tests passed');
-        } catch (error) {
-            console.log('❌ Betting Service tests failed:', error.message);
-        }
-    }
-
-    async testUserPreferences() {
-        console.log('⚙️ Testing User Preferences Service...');
-        
-        try {
-            const testUserId = 'test-user-123';
-            
-            // Test default preferences
-            const defaultPrefs = this.userPrefs.getUserPreferences(testUserId);
-            this.assert(defaultPrefs, 'Should return default preferences');
-            this.assert(defaultPrefs.notifications, 'Should have notifications object');
-            this.assert(defaultPrefs.display, 'Should have display object');
-            this.assert(defaultPrefs.betting, 'Should have betting object');
-            this.assert(defaultPrefs.favorites, 'Should have favorites object');
-            
-            // Test setting preferences
-            const newNotifications = { fightResults: false };
-            const updatedPrefs = this.userPrefs.updateNotificationPreferences(testUserId, newNotifications);
-            this.assert(updatedPrefs.fightResults === false, 'Should update notification preferences');
-            
-            // Test favorite fighters
-            const favorites = this.userPrefs.addFavoriteFighter(testUserId, 'Test Fighter');
-            this.assert(favorites.includes('Test Fighter'), 'Should add favorite fighter');
-            
-            const removedFavorites = this.userPrefs.removeFavoriteFighter(testUserId, 'Test Fighter');
-            this.assert(!removedFavorites.includes('Test Fighter'), 'Should remove favorite fighter');
-            
-            // Test export/import
-            const exportData = this.userPrefs.exportPreferences(testUserId);
-            this.assert(exportData.userId === testUserId, 'Export should include user ID');
-            this.assert(exportData.preferences, 'Export should include preferences');
-            
-            console.log('✅ User Preferences tests passed');
-        } catch (error) {
-            console.log('❌ User Preferences tests failed:', error.message);
-        }
-    }
-
     async testFeatureFlags() {
         console.log('🏁 Testing Feature Flags...');
         
@@ -157,18 +79,13 @@ class FightBotTester {
                 this.assert(isFeatureEnabled(feature), `Core feature ${feature} should be enabled`);
             }
             
-            // Test premium features based on version type
-            const premiumFeatures = ['advancedAnalytics', 'betOddsTracking', 'exportData', 'personalizedFeed'];
+            // Test all features (all free now)
+            const allFeatures = ['advancedAnalytics', 'betOddsTracking', 'exportData', 'personalizedFeed'];
             
-            for (const feature of premiumFeatures) {
+            for (const feature of allFeatures) {
                 const enabled = isFeatureEnabled(feature);
-                if (isPremium()) {
-                    this.assert(enabled, `Premium feature ${feature} should be enabled in premium version`);
-                } else {
-                    // In free version, premium features should be disabled
-                    // Since we're testing premium version, this assertion might not apply
-                    console.log(`   📊 Premium feature ${feature}: ${enabled ? 'enabled' : 'disabled'}`);
-                }
+                this.assert(enabled, `Feature ${feature} should be enabled`);
+                console.log(`   📊 Feature ${feature}: ${enabled ? 'enabled' : 'disabled'}`);
             }
             
             console.log('✅ Feature flags tests passed');
@@ -197,7 +114,7 @@ class FightBotTester {
         console.log(`🎯 Success Rate: ${((passed / total) * 100).toFixed(1)}%`);
         
         if (passed === total) {
-            console.log('\n🎉 All tests passed! FightBot Premium is ready to go!');
+            console.log('\n🎉 All tests passed! FightBot is ready to go!');
         } else {
             console.log('\n⚠️ Some tests failed. Please check the output above.');
         }

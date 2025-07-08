@@ -1,11 +1,24 @@
-# FightBot Heroku Deployment Guide
+# FightBot Heroku Deployment Guide (FREE Version)
 
 ## Prerequisites
 
 1. **Heroku Account**: Sign up at https://heroku.com
 2. **Heroku CLI**: Download from https://devcenter.heroku.com/articles/heroku-cli
 3. **Git**: Make sure your project is in a Git repository
-4. **Production Stripe Account**: Live API keys from Stripe dashboard
+4. **Discord Bot**: Bot token and application ID from Discord Developer Portal
+
+## Pre-Deployment Checklist
+
+### ✅ Discord Bot Setup
+- [ ] Created Discord application at https://discord.com/developers/applications
+- [ ] Got production bot token and client ID
+- [ ] Invited bot to your production Discord server with proper permissions
+- [ ] Noted down Guild ID (optional, for guild-specific commands)
+
+### ✅ Code Preparation
+- [ ] All code committed to git
+- [ ] Tested bot locally with `npm start`
+- [ ] Verified all commands work with `/help`
 
 ## Step-by-Step Deployment
 
@@ -19,33 +32,22 @@ heroku login
 
 ### 3. Create Heroku App
 ```bash
-heroku create fightbot-premium
+heroku create fightbot-free
 # Or use your preferred app name:
 # heroku create your-app-name
 ```
 
 ### 4. Set Environment Variables
 ```bash
-# Discord Configuration
+# Discord Configuration (REQUIRED)
 heroku config:set DISCORD_TOKEN=your_production_bot_token
 heroku config:set CLIENT_ID=your_production_client_id
+
+# Optional: Guild-specific deployment (faster command updates)
 heroku config:set GUILD_ID=your_production_guild_id
 
-# Stripe Configuration (LIVE KEYS!)
-heroku config:set STRIPE_SECRET_KEY=sk_live_your_live_secret_key
-heroku config:set STRIPE_PUBLISHABLE_KEY=pk_live_your_live_publishable_key
-heroku config:set STRIPE_PRICE_ID=price_your_live_monthly_price_id
-heroku config:set STRIPE_WEBHOOK_SECRET=whsec_your_live_webhook_secret
-
-# Server Configuration
+# Production Environment
 heroku config:set NODE_ENV=production
-heroku config:set WEBHOOK_PORT=3000
-```
-
-### 5. Get Your Heroku App URL
-After creating the app, your webhook URL will be:
-```
-https://your-app-name.herokuapp.com/webhook/stripe
 ```
 
 Set this in Heroku:

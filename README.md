@@ -272,6 +272,8 @@ fightbot-free/
 
 ## 🛡️ Security & Privacy
 
+> **IMPORTANT SECURITY NOTICE:** Never commit your `.env` file or expose your Discord bot token. If you believe your token has been exposed, immediately regenerate it in the Discord Developer Portal.
+
 - **Data Protection** - Your preferences and data are kept secure
 - **No Personal Information** - We only store Discord user IDs and preferences
 - **Secure API Calls** - All external API calls are encrypted
