@@ -1,0 +1,48 @@
+refactor(core): Complete modular architecture with working UFC data fetching
+
+BREAKING CHANGE: Complete refactor of FightBot to modular architecture
+
+Features:
+- Modular architecture with dependency injection
+- Real-time UFC data scraping with caching
+- Three working slash commands: /fight, /fighter, /info
+- Replit deployment support
+
+Technical Details:
+- Service container with proper dependency injection
+- Command registry with dynamic command loading
+- Event system for Discord interactions
+- UFC data scraping with axios and cheerio
+- Caching system for UFC events and fighter data
+- ESM modules throughout the codebase
+
+Working Features:
+1. Commands:
+   - /fight: Shows upcoming UFC event with full fight card
+   - /fighter: Displays fighter stats and information
+   - /info: Shows bot information and available commands
+
+2. Services:
+   - UFCService: Handles UFC data operations
+   - DatabaseService: Prepared for future persistence needs
+   - LoggerService: Structured logging
+   - ErrorHandler: Centralized error handling
+
+3. Data Fetching:
+   - Real-time scraping from UFC.com
+   - Automatic fight card parsing
+   - Fighter profile lookups
+   - Caching for performance
+
+Environment:
+- Node.js >= 16.9.0
+- ESM modules
+- Discord.js v14
+
+Notes:
+- Fighter search needs improvement
+- Caching duration set to 1 hour
+- Ready for Replit deployment
+
+This version provides a stable foundation for future features
+while maintaining core UFC event tracking functionality.
