@@ -1,7 +1,7 @@
 {
-  "name": "fightbot",
-  "version": "1.0.0",
-  "description": "Fightbot for Discord",
+  "name": "fightbot-free",
+  "version": "1.0.0-free",
+  "description": "FightBot Free - Ultimate UFC Discord Bot (Free Version)",
   "main": "index.js",
   "type":"module",
   "scripts": {

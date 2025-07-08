@@ -1,14 +1,39 @@
-# Fightbot
+# FightBot - Ultimate UFC Discord Bot
 ![alt text](https://github.com/MehKoiter/Fightbot/blob/Adding-Axios/img/mmaGloveSmall.png?raw=true)
 
-A Discord bot for UFC fight information and updates.
+A comprehensive Discord bot for UFC fight information, analytics, and updates. Available in Free and Premium versions.
 
-## Features
-- Get information about upcoming UFC events
-- Slash command support
-- Modular command and event system
+## 🚀 Features
 
-## Setup
+### Free Version
+- ✅ Upcoming UFC event information
+- ✅ Basic fight card details (up to 5 fights)
+- ✅ Fighter rankings and records
+- ✅ Event schedules and venue info
+- ✅ Interactive buttons for additional details
+- ✅ Real-time data from UFC.com
+
+### Premium Version
+- 🌟 **Everything in Free, plus:**
+- 📊 Detailed fighter statistics and analytics
+- 💰 Real-time betting odds tracking
+- 🔮 Advanced fight analysis and predictions
+- 📱 Custom notifications for favorite fighters
+- 📈 Historical data and trends
+- 📁 Data export capabilities
+- ⚡ Priority support and faster updates
+- 🎯 Unlimited event queries and full fight cards
+
+## 📋 Commands
+
+| Command | Description | Available In |
+|---------|-------------|--------------|
+| `/fight` | Get upcoming UFC event with fight card | Free & Premium |
+| `/premium` | Learn about Premium features and pricing | Free & Premium |
+| `/support` | Get help and contact information | Free & Premium |
+| `/info` | Show bot information and available features | Free & Premium |
+
+## 🛠️ Setup
 
 ### Prerequisites
 - Node.js 16.9.0 or higher
@@ -48,6 +73,7 @@ A Discord bot for UFC fight information and updates.
 For development with auto-restart on file changes:
 ```bash
 npm run dev
+```
 ```
 
 ## Commands

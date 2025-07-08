@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import UfcService from "../services/ufcService.js";
 import { eventCache } from "../services/eventCache.js";
+import { VERSION_CONFIG, isFeatureEnabled, isFree } from "../config/version.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -59,9 +60,10 @@ export default {
 
             const embeds = [mainEmbed];
 
-            // Create embeds for main card fights (limit to first 5 for Discord limits)
+            // Create embeds for main card fights (apply version limits)
             if (event.fights && event.fights.length > 0) {
-                const mainCardFights = event.fights.slice(0, 5); // Limit to 5 fights due to Discord embed limits
+                const maxFights = isFree() ? VERSION_CONFIG.limits.maxFightsDisplayed : event.fights.length;
+                const mainCardFights = event.fights.slice(0, Math.min(maxFights, 5)); // Discord embed limits
                 
                 // Create headliner embed (first fight is usually the main event)
                 const headliner = mainCardFights[0];
@@ -118,11 +120,39 @@ export default {
                 }
             }
 
-            // Add footer with UFC branding
+            // Add footer with version information
             embeds[embeds.length - 1].setFooter({
-                text: 'Data from UFC.com • FightBot',
+                text: isFree() ? VERSION_CONFIG.messages.freeVersionFooter : `Data from UFC.com • FightBot Premium v${VERSION_CONFIG.version}`,
                 iconURL: 'https://logoeps.com/wp-content/uploads/2013/03/ufc-vector-logo.png'
             });
+
+            // Add premium promotion embed for free users
+            if (isFree()) {
+                const premiumEmbed = new EmbedBuilder()
+                    .setColor('#9932cc')
+                    .setTitle('🌟 Upgrade to FightBot Premium')
+                    .setDescription(VERSION_CONFIG.messages.premiumPromotion)
+                    .addFields(
+                        {
+                            name: '🚀 Premium Features',
+                            value: '• **Detailed Fighter Stats** - Full records, striking accuracy, takedown defense\n' +
+                                   '• **Betting Odds Tracking** - Real-time odds from multiple sportsbooks\n' +
+                                   '• **Advanced Analytics** - Win probability, performance trends\n' +
+                                   '• **Custom Notifications** - Get alerts for your favorite fighters\n' +
+                                   '• **Historical Data** - Access past event results and trends\n' +
+                                   '• **Export Data** - Download fight cards and stats',
+                            inline: false
+                        },
+                        {
+                            name: '💎 Coming Soon',
+                            value: '• Live fight updates\n• Prediction algorithms\n• Multi-event tracking\n• Premium support',
+                            inline: false
+                        }
+                    )
+                    .setFooter({ text: 'Contact us for Premium pricing and setup' });
+                
+                embeds.push(premiumEmbed);
+            }
 
             // Create interactive buttons for additional information
             const actionRow = new ActionRowBuilder()
