@@ -6,8 +6,8 @@
 
 export const VERSION_CONFIG = {
     // Current version info
-    version: "1.0.0-premium",
-    type: "PREMIUM", // FREE or PREMIUM
+    version: "1.0.0-free",
+    type: "FREE", // FREE or PREMIUM
     
     // Feature flags
     features: {
@@ -20,26 +20,26 @@ export const VERSION_CONFIG = {
         fightTimes: true,
         refreshData: true,
         
-        // Premium features (enabled in premium version)
-        detailedStats: true,
-        predictionAlerts: true,
-        customNotifications: true,
-        advancedAnalytics: true,
-        historicalData: true,
-        betOddsTracking: true,
-        multiEventTracking: true,
-        personalizedFeed: true,
-        exportData: true,
-        premiumSupport: true
+        // Premium features (disabled in free version)
+        detailedStats: false,
+        predictionAlerts: false,
+        customNotifications: false,
+        advancedAnalytics: false,
+        historicalData: false,
+        betOddsTracking: false,
+        multiEventTracking: false,
+        personalizedFeed: false,
+        exportData: false,
+        premiumSupport: false
     },
     
-    // Limits for premium version
+    // Limits for free version
     limits: {
-        maxEventsPerQuery: 10,
-        maxFightsDisplayed: 50,
-        maxAnalysisDepth: "advanced",
-        cacheTimeout: 24 * 60 * 60 * 1000, // 24 hours
-        requestsPerHour: 1000
+        maxEventsPerQuery: 1,
+        maxFightsDisplayed: 5,
+        maxAnalysisDepth: "basic",
+        cacheTimeout: 1 * 60 * 60 * 1000, // 1 hour
+        requestsPerHour: 50
     },
     
     // Messages
