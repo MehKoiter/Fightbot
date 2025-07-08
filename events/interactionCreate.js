@@ -1,6 +1,9 @@
-import { Events, EmbedBuilder } from 'discord.js';
+import { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import UfcService from '../services/ufcService.js';
+import UserDatabaseService from '../services/userDatabaseService.js';
 import { eventCache } from '../services/eventCache.js';
+
+const userDB = new UserDatabaseService();
 
 export default {
 	name: Events.InteractionCreate,
@@ -27,6 +30,9 @@ export default {
 			}
 
 			try {
+				// Track user activity and check premium status
+				await trackUserActivity(interaction);
+				
 				await command.execute(interaction);
 			} catch (error) {
 				console.error(`❌ Error executing ${interaction.commandName}:`, error.message);
@@ -71,11 +77,49 @@ export default {
 };
 
 /**
- * Handle button interactions for fight-related buttons
+ * Handle button interactions for fight-related buttons and other interactions
  * @param {import('discord.js').ButtonInteraction} interaction 
  */
 async function handleButtonInteraction(interaction) {
 	const customId = interaction.customId;
+	
+	// Handle support button
+	if (customId === 'support_fightbot') {
+		try {
+			// Show donation info
+			const embed = new EmbedBuilder()
+				.setColor(0xff424d)
+				.setTitle('❤️ Support FightBot')
+				.setDescription('Thank you for considering supporting FightBot! All features are **completely FREE**, but your support helps us:')
+				.addFields(
+					{ name: '🌟 How Support Helps', value: '• Keep the bot running 24/7\n• Add new features faster\n• Improve data accuracy\n• Cover server costs\n• Fund development time', inline: false },
+					{ name: '💖 Ways to Support', value: '• Monthly Patreon donations\n• One-time contributions\n• Spread the word about FightBot\n• Report bugs and suggest features', inline: false }
+				)
+				.setFooter({ text: 'Every bit of support is appreciated! ❤️' });
+			
+			const row = new ActionRowBuilder()
+				.addComponents(
+					new ButtonBuilder()
+						.setLabel('Support on Patreon')
+						.setStyle(ButtonStyle.Link)
+						.setURL('https://patreon.com/fightbot')
+						.setEmoji('❤️')
+				);
+			
+			await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+			return;
+		} catch (error) {
+			console.error('Support button interaction error:', error);
+			
+			if (!interaction.replied) {
+				await interaction.reply({ 
+					content: '❌ An error occurred processing your request.', 
+					ephemeral: true 
+				});
+			}
+			return;
+		}
+	}
 	
 	// Handle fight-related button interactions
 	if (!customId.startsWith('fight_')) return;
@@ -541,7 +585,7 @@ function identifyKeyMatchups(fights) {
 			significance = '👑 Main Event';
 		} else if (fight.weightClass?.includes('Championship') || fight.weightClass?.includes('Title')) {
 			significance = '🏆 Title Fight';
-		} else if (redRank && blueRank && redRank !== 'Unranked' && blueRank !== 'Unranked') {
+		} else if (redRank && redRank !== 'Unranked' && blueRank && blueRank !== 'Unranked') {
 			significance = '🔥 Ranked Battle';
 		} else if ((redRank && redRank !== 'Unranked') || (blueRank && blueRank !== 'Unranked')) {
 			significance = '⭐ Contender Fight';
@@ -798,3 +842,32 @@ function getNotableMatchups(fights) {
 
 	return notableMatchups;
 }
+
+/**
+ * Track user activity and ensure they exist in the database
+ */
+async function trackUserActivity(interaction) {
+	try {
+		const userId = interaction.user.id;
+		const username = interaction.user.username;
+		const commandName = interaction.commandName;
+		
+		// Ensure user exists in database (create if not exists)
+		try {
+			await userDB.createUser(userId, username);
+		} catch (error) {
+			// User might already exist, which is fine
+			if (!error.message.includes('UNIQUE constraint failed')) {
+				throw error;
+			}
+		}
+		
+		// Track command usage
+		await userDB.trackUsage(userId, commandName, 'command');
+		
+	} catch (error) {
+		console.error('Error tracking user activity:', error);
+		// Don't block command execution if tracking fails
+	}
+}
+

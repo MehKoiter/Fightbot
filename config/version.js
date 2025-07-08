@@ -1,17 +1,17 @@
 /**
  * FightBot Version Configuration
  * 
- * This file defines the features available in different versions of FightBot
+ * This file defines the features available in FightBot - ALL FREE!
  */
 
 export const VERSION_CONFIG = {
     // Current version info
     version: "1.0.0-free",
-    type: "FREE", // FREE or PREMIUM
+    type: "FREE", // All features are now FREE
     
-    // Feature flags
+    // Feature flags - ALL ENABLED FOR FREE
     features: {
-        // Core features (available in both versions)
+        // Core features (available for everyone)
         basicFightCard: true,
         upcomingEvents: true,
         fightAnalysis: true,
@@ -20,34 +20,34 @@ export const VERSION_CONFIG = {
         fightTimes: true,
         refreshData: true,
         
-        // Premium features (disabled in free version)
-        detailedStats: false,
-        predictionAlerts: false,
-        customNotifications: false,
-        advancedAnalytics: false,
-        historicalData: false,
-        betOddsTracking: false,
-        multiEventTracking: false,
-        personalizedFeed: false,
-        exportData: false,
-        premiumSupport: false
+        // Advanced features (now FREE for everyone!)
+        detailedStats: true,
+        predictionAlerts: true,
+        customNotifications: true,
+        advancedAnalytics: true,
+        historicalData: true,
+        betOddsTracking: true,
+        multiEventTracking: true,
+        personalizedFeed: true,
+        exportData: true,
+        premiumSupport: true
     },
     
-    // Limits for free version
+    // Generous limits for free version
     limits: {
-        maxEventsPerQuery: 1,
-        maxFightsDisplayed: 5,
-        maxAnalysisDepth: "basic",
-        cacheTimeout: 1 * 60 * 60 * 1000, // 1 hour
-        requestsPerHour: 50
+        maxEventsPerQuery: 10,
+        maxFightsDisplayed: 50,
+        maxAnalysisDepth: "advanced",
+        cacheTimeout: 24 * 60 * 60 * 1000, // 24 hours
+        requestsPerHour: 1000
     },
     
     // Messages
     messages: {
-        freeVersionFooter: "FightBot Free • Upgrade to Premium for more features",
-        premiumFooter: "FightBot Premium • Thank you for your support!",
-        premiumPromotion: "🌟 **Upgrade to FightBot Premium** for advanced analytics, detailed stats, and more! Contact support for pricing.",
-        featureDisabled: "🔒 This feature is available in FightBot Premium only."
+        freeVersionFooter: "FightBot - Free Forever! ❤️",
+        premiumFooter: "FightBot - Free Forever! Support us on Patreon ❤️",
+        premiumPromotion: "❤️ **Support FightBot** on Patreon to help fund development and keep all features free!",
+        featureDisabled: "🎉 This feature is FREE and available to everyone!"
     }
 };
 
@@ -57,9 +57,11 @@ export const isFeatureEnabled = (featureName) => {
 };
 
 export const isPremium = () => {
-    return VERSION_CONFIG.type === "PREMIUM";
+    // Everything is free now, but return true to enable all features
+    return true;
 };
 
 export const isFree = () => {
-    return VERSION_CONFIG.type === "FREE";
+    // Everything is free, but we keep this for compatibility
+    return true;
 };

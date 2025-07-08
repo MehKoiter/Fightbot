@@ -4,6 +4,8 @@ import { token } from './config.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import NotificationService from './services/notificationService.js';
+import UserDatabaseService from './services/userDatabaseService.js';
 import { VERSION_CONFIG } from './config/version.js';
 
 // Get the directory name for ES modules
@@ -23,6 +25,10 @@ const client = new Client({
 // Set the clients commands to an empty list.
 // New commands will be added later.
 client.commands = new Collection();
+
+// Initialize notification service
+let notificationService;
+let userDB;
 
 /**
  * Dynamically loads command files from the commands directory
@@ -92,17 +98,29 @@ async function loadEvents() {
  * Initialize the Discord bot
  */
 async function initialize() {
-    console.log(`🤖 Starting FightBot ${VERSION_CONFIG.version} (${VERSION_CONFIG.type})...`);
+    console.log(`🤖 Starting FightBot ${VERSION_CONFIG.version} (All Features FREE!)...`);
+    
+    // Initialize user database
+    userDB = new UserDatabaseService();
+    await userDB.initialize();
+    console.log('✅ User database initialized');
     
     // Load commands and events
     await loadCommands();
     await loadEvents();
-    
+
     // Tells the client to login to discord given its token.
     try {
         await client.login(token);
         
-        console.log(`✅ FightBot ${VERSION_CONFIG.type} initialized successfully!`);
+        // Initialize notification service after successful login
+        notificationService = new NotificationService(client);
+        client.notifications = notificationService;
+        
+        console.log(`✅ FightBot initialized successfully! All features are FREE! 🎉`);
+        
+        // Start background services
+        startBackgroundServices();
     } catch (error) {
         console.error('❌ Failed to login to Discord:', error.message);
         process.exit(1);
@@ -118,6 +136,47 @@ process.on('uncaughtException', (error) => {
     console.error('❌ Uncaught exception:', error);
     process.exit(1);
 });
+
+/**
+ * Start background services and tasks
+ */
+function startBackgroundServices() {
+    console.log('🌟 Starting background services...');
+    
+    // Check for event reminders every hour
+    setInterval(checkEventReminders, 60 * 60 * 1000);
+    
+    // Check for odds changes every 15 minutes (if odds service is available)
+    setInterval(checkOddsChanges, 15 * 60 * 1000);
+    
+    console.log('✅ Background services started');
+}
+
+/**
+ * Check for upcoming events and send reminders
+ */
+async function checkEventReminders() {
+    try {
+        // This would check for events starting soon and send reminders
+        console.log('📅 Checking for event reminders...');
+        // Implementation would go here
+    } catch (error) {
+        console.error('Error checking event reminders:', error);
+    }
+}
+
+/**
+ * Check for significant odds changes
+ */
+async function checkOddsChanges() {
+    try {
+        // This would monitor odds changes and notify users
+        console.log('💰 Checking for odds changes...');
+        // Implementation would go here
+    } catch (error) {
+        console.error('Error checking odds changes:', error);
+    }
+}
 
 // Start the bot
 initialize();
