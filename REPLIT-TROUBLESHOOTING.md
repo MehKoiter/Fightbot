@@ -6,6 +6,19 @@
 - Replit shows "Limited support" for repositories that don't have specific Replit configuration files
 - This doesn't mean the import will fail - it's just a warning
 - Our repository now has proper Replit configuration files
+- **IMPORTANT**: If the repository is private, Replit cannot access it for import
+
+### Check Repository Visibility:
+If you can't access https://github.com/MehKoiter/Fightbot directly (shows 404), the repository is **private**.
+
+#### Solution for Private Repository:
+1. **Make Repository Public** (Recommended):
+   - Go to repository Settings → Danger Zone → Change visibility → Make public
+   - This is safe since no sensitive data is in the code (tokens are in environment variables)
+   
+2. **Or Keep Private + Manual Setup**:
+   - Create new Node.js Repl on Replit
+   - Clone manually with authentication
 
 ### Solutions:
 
