@@ -1,14 +1,16 @@
 {
-  "name": "fightbot-free",
-  "version": "1.0.0-free",
-  "description": "FightBot Free - Ultimate UFC Discord Bot (Free Version)",
+  "name": "fightbot-premium",
+  "version": "1.0.0-premium",
+  "description": "FightBot Premium - Ultimate UFC Discord Bot (Premium Version)",
   "main": "index.js",
   "type":"module",
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
     "deploy": "node deploy-commands.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test-premium.js",
+    "test:simple": "node simple-test.js",
+    "test:ufc": "node -e \"import('./services/ufcService.js').then(m => new m.default().getUpcomingEvent().then(console.log))\""
   },
   "author": "",
   "license": "ISC",

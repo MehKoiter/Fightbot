@@ -4,6 +4,8 @@ import { token } from './config.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import NotificationService from './services/notificationService.js';
+import { VERSION_CONFIG } from './config/version.js';
 
 // Get the directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -22,6 +24,9 @@ const client = new Client({
 // Set the clients commands to an empty list.
 // New commands will be added later.
 client.commands = new Collection();
+
+// Initialize notification service
+let notificationService;
 
 /**
  * Dynamically loads command files from the commands directory
@@ -91,7 +96,7 @@ async function loadEvents() {
  * Initialize the Discord bot
  */
 async function initialize() {
-    console.log('🤖 Starting Fightbot...');
+    console.log(`🤖 Starting FightBot ${VERSION_CONFIG.version} (${VERSION_CONFIG.type})...`);
     
     // Load commands and events
     await loadCommands();
@@ -100,6 +105,17 @@ async function initialize() {
     // Tells the client to login to discord given its token.
     try {
         await client.login(token);
+        
+        // Initialize notification service after successful login
+        notificationService = new NotificationService(client);
+        client.notifications = notificationService;
+        
+        console.log(`✅ FightBot ${VERSION_CONFIG.type} initialized successfully!`);
+        
+        // Start periodic tasks for premium features
+        if (VERSION_CONFIG.type === 'PREMIUM') {
+            startPremiumServices();
+        }
     } catch (error) {
         console.error('❌ Failed to login to Discord:', error.message);
         process.exit(1);
@@ -115,6 +131,47 @@ process.on('uncaughtException', (error) => {
     console.error('❌ Uncaught exception:', error);
     process.exit(1);
 });
+
+/**
+ * Start premium services and background tasks
+ */
+function startPremiumServices() {
+    console.log('🌟 Starting premium services...');
+    
+    // Check for event reminders every hour
+    setInterval(checkEventReminders, 60 * 60 * 1000);
+    
+    // Check for odds changes every 15 minutes
+    setInterval(checkOddsChanges, 15 * 60 * 1000);
+    
+    console.log('✅ Premium services started');
+}
+
+/**
+ * Check for upcoming events and send reminders
+ */
+async function checkEventReminders() {
+    try {
+        // This would check for events starting soon and send reminders
+        console.log('📅 Checking for event reminders...');
+        // Implementation would go here
+    } catch (error) {
+        console.error('Error checking event reminders:', error);
+    }
+}
+
+/**
+ * Check for significant odds changes
+ */
+async function checkOddsChanges() {
+    try {
+        // This would monitor odds changes and notify users
+        console.log('💰 Checking for odds changes...');
+        // Implementation would go here
+    } catch (error) {
+        console.error('Error checking odds changes:', error);
+    }
+}
 
 // Start the bot
 initialize();

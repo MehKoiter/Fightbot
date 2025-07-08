@@ -6,8 +6,8 @@
 
 export const VERSION_CONFIG = {
     // Current version info
-    version: "1.0.0-free",
-    type: "FREE", // FREE or PREMIUM
+    version: "1.0.0-premium",
+    type: "PREMIUM", // FREE or PREMIUM
     
     // Feature flags
     features: {
@@ -20,31 +20,32 @@ export const VERSION_CONFIG = {
         fightTimes: true,
         refreshData: true,
         
-        // Premium features (disabled in free version)
-        detailedStats: false,
-        predictionAlerts: false,
-        customNotifications: false,
-        advancedAnalytics: false,
-        historicalData: false,
-        betOddsTracking: false,
-        multiEventTracking: false,
-        personalizedFeed: false,
-        exportData: false,
-        premiumSupport: false
+        // Premium features (enabled in premium version)
+        detailedStats: true,
+        predictionAlerts: true,
+        customNotifications: true,
+        advancedAnalytics: true,
+        historicalData: true,
+        betOddsTracking: true,
+        multiEventTracking: true,
+        personalizedFeed: true,
+        exportData: true,
+        premiumSupport: true
     },
     
-    // Limits for free version
+    // Limits for premium version
     limits: {
-        maxEventsPerQuery: 1,
-        maxFightsDisplayed: 5,
-        maxAnalysisDepth: "basic",
-        cacheTimeout: 30 * 60 * 1000, // 30 minutes
-        requestsPerHour: 100
+        maxEventsPerQuery: 10,
+        maxFightsDisplayed: 50,
+        maxAnalysisDepth: "advanced",
+        cacheTimeout: 24 * 60 * 60 * 1000, // 24 hours
+        requestsPerHour: 1000
     },
     
     // Messages
     messages: {
         freeVersionFooter: "FightBot Free • Upgrade to Premium for more features",
+        premiumFooter: "FightBot Premium • Thank you for your support!",
         premiumPromotion: "🌟 **Upgrade to FightBot Premium** for advanced analytics, detailed stats, and more! Contact support for pricing.",
         featureDisabled: "🔒 This feature is available in FightBot Premium only."
     }
