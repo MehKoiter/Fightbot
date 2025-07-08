@@ -203,7 +203,7 @@ class FightCommand extends BaseCommand {
         const supportEmbed = new EmbedBuilder()
             .setColor('#00ff00')
             .setTitle('❤️ Support FightBot Development')
-            .setDescription(config.messages.premiumPromotion)
+            .setDescription('❤️ **Support FightBot** on Patreon to help fund development!')
             .addFields(
                 {
                     name: '🚀 All Features Are FREE!',

@@ -94,7 +94,7 @@ const coreConfig = {
     // Messages
     messages: {
         freeVersionFooter: "FightBot - Free Forever! ❤️",
-        premiumPromotion: "❤️ **Support FightBot** on Patreon to help fund development and keep all features free!",
+        premiumPromotion: "❤️ **Support FightBot** on Patreon to help fund development!",
         featureDisabled: "🎉 This feature is FREE and available to everyone!"
     }
 };

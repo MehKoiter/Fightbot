@@ -62,9 +62,7 @@ class InfoCommand extends BaseCommand {
                     },
                     {
                         name: '🎯 Features',
-                        value: isFree() 
-                            ? '• Basic fight card information\n• Fighter rankings\n• Event schedules\n• Limited analysis\n\n**Upgrade to Premium for more!**'
-                            : '• Complete fight card details\n• Advanced analytics\n• Betting odds tracking\n• Custom notifications\n• Historical data\n• Export capabilities',
+                        value: '• Complete fight card details\n• Advanced analytics\n• Betting odds tracking\n• Custom notifications\n• Historical data\n• Export capabilities',
                         inline: false
                     },
                     {
@@ -74,9 +72,7 @@ class InfoCommand extends BaseCommand {
                     }
                 )
                 .setFooter({ 
-                    text: isFree() 
-                        ? 'FightBot Free • Upgrade to Premium for more features'
-                        : `FightBot Premium v${VERSION_CONFIG.version} • Thank you for your support!`,
+                    text: `FightBot v${VERSION_CONFIG.version} • All Features Are FREE!`,
                     iconURL: 'https://logoeps.com/wp-content/uploads/2013/03/ufc-vector-logo.png'
                 })
                 .setTimestamp();

@@ -43,7 +43,7 @@ export const VERSION_CONFIG = {
     
     // Messages
     messages: {
-        freeVersionFooter: "FightBot - All Premium Features Are Now FREE!",
+        freeVersionFooter: "FightBot - All Features Are FREE!",
         upgradeMessage: "", // No longer needed since everything is free
         supportMessage: "Need help? Use /support to get assistance!",
         welcomeMessage: "Welcome to FightBot - Your UFC fight companion!",
