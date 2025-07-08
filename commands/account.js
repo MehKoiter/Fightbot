@@ -1,7 +1,4 @@
 import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import UserDatabaseService from '../services/userDatabaseService.js';
-
-const userDB = new UserDatabaseService();
 
 export default {
     data: new SlashCommandBuilder()
@@ -10,47 +7,26 @@ export default {
     
     async execute(interaction) {
         try {
-            const userId = interaction.user.id;
-            let user = await userDB.getUserByDiscordId(userId);
+            const username = interaction.user.username;
             
-            // Create user if they don't exist
-            if (!user) {
-                try {
-                    await userDB.createUser(userId, interaction.user.username);
-                    user = await userDB.getUserByDiscordId(userId);
-                } catch (error) {
-                    console.error('Error creating user:', error);
-                }
-            }
-            
-            if (!user) {
-                const embed = new EmbedBuilder()
-                    .setColor(0xff9900)
-                    .setTitle('👤 Account Creation Error')
-                    .setDescription('There was an issue accessing your account. Please try again.')
-                    .setFooter({ text: 'All FightBot features are free to use!' });
-                
-                return interaction.reply({ embeds: [embed], ephemeral: true });
-            }
-            
+            // All users have full access now - no account needed
             const embed = new EmbedBuilder()
                 .setColor(0x00ff00)
-                .setTitle('👤 Your FightBot Account')
-                .setDescription('🎉 **All features are FREE!** No subscription required.')
+                .setTitle(`👤 ${username}'s Account`)
+                .setDescription('FightBot no longer tracks individual user accounts. All features are free for everyone!')
                 .addFields(
-                    { name: '📊 Status', value: 'Free Access ✅', inline: true },
-                    { name: '📅 Member Since', value: new Date(user.created_at).toDateString(), inline: true },
-                    { name: '🔢 Commands Used', value: user.command_count?.toString() || '0', inline: true },
-                    { name: '🌟 Features Available', value: '• Live betting odds\n• Fight analytics\n• Event notifications\n• Export data\n• All premium features!', inline: false }
+                    { name: '✅ Account Status', value: 'All features unlocked', inline: true },
+                    { name: '🎮 Commands', value: 'Use `/help` to see all available commands', inline: true },
+                    { name: '❤️ Support FightBot', value: 'Consider supporting on Patreon if you enjoy FightBot', inline: false }
                 )
-                .setFooter({ text: 'Enjoying FightBot? Consider supporting us on Patreon!' });
+                .setFooter({ text: 'All FightBot features are free to use!' });
 
             const row = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId('support_fightbot')
-                        .setLabel('❤️ Support FightBot')
-                        .setStyle(ButtonStyle.Secondary)
+                        .setLabel('Support on Patreon')
+                        .setStyle(ButtonStyle.Link)
+                        .setURL('https://patreon.com/fightbot')
                         .setEmoji('❤️')
                 );
 

@@ -1,9 +1,29 @@
 import { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import UfcService from '../services/ufcService.js';
-import UserDatabaseService from '../services/userDatabaseService.js';
+import CommandAnalyticsService from '../services/commandAnalyticsService.js';
 import { eventCache } from '../services/eventCache.js';
 
-const userDB = new UserDatabaseService();
+// Create a singleton analytics instance
+let analyticsDB;
+let isInitialized = false;
+
+// Initialize the analytics service
+async function getAnalyticsService() {
+    if (!analyticsDB) {
+        analyticsDB = new CommandAnalyticsService();
+    }
+    
+    if (!isInitialized) {
+        try {
+            await analyticsDB.init();
+            isInitialized = true;
+        } catch (error) {
+            console.error('Error initializing analytics service:', error);
+        }
+    }
+    
+    return analyticsDB;
+}
 
 export default {
 	name: Events.InteractionCreate,
@@ -30,8 +50,8 @@ export default {
 			}
 
 			try {
-				// Track user activity and check premium status
-				await trackUserActivity(interaction);
+				// Track command usage for analytics (no user data)
+				await trackCommandUsage(interaction);
 				
 				await command.execute(interaction);
 			} catch (error) {
@@ -846,27 +866,28 @@ function getNotableMatchups(fights) {
 /**
  * Track user activity and ensure they exist in the database
  */
-async function trackUserActivity(interaction) {
+async function trackCommandUsage(interaction) {
 	try {
-		const userId = interaction.user.id;
-		const username = interaction.user.username;
 		const commandName = interaction.commandName;
+		const guildId = interaction.guildId; // Optional: for guild-specific analytics
 		
-		// Ensure user exists in database (create if not exists)
-		try {
-			await userDB.createUser(userId, username);
-		} catch (error) {
-			// User might already exist, which is fine
-			if (!error.message.includes('UNIQUE constraint failed')) {
-				throw error;
+		// Get or initialize analytics service
+		const analytics = await getAnalyticsService();
+		
+		// Only track if analytics service is available and initialized
+		if (analytics && analytics.db) {
+			try {
+				// Track anonymous command usage
+				await analytics.trackCommand(commandName, guildId);
+				console.log(`📊 Command tracked: ${commandName}`);
+			} catch (error) {
+				console.warn('Analytics tracking skipped:', error.message);
 			}
+		} else {
+			console.warn('Analytics service not available, command tracking skipped');
 		}
-		
-		// Track command usage
-		await userDB.trackUsage(userId, commandName, 'command');
-		
 	} catch (error) {
-		console.error('Error tracking user activity:', error);
+		console.error('Error tracking command analytics:', error);
 		// Don't block command execution if tracking fails
 	}
 }

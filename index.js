@@ -4,7 +4,7 @@ import { token } from './config.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import UserDatabaseService from './services/userDatabaseService.js';
+import CommandAnalyticsService from './services/commandAnalyticsService.js';
 import { VERSION_CONFIG } from './config/version.js';
 
 // Get the directory name for ES modules
@@ -25,8 +25,8 @@ const client = new Client({
 // New commands will be added later.
 client.commands = new Collection();
 
-// Initialize database service
-let userDB;
+// Initialize analytics service
+let analyticsDB;
 
 /**
  * Dynamically loads command files from the commands directory
@@ -98,11 +98,9 @@ async function loadEvents() {
 async function initialize() {
     console.log(`🤖 Starting FightBot ${VERSION_CONFIG.version} (All Features FREE!)...`);
     
-    // Initialize user database
-    userDB = new UserDatabaseService();
-    await userDB.init(); // Using the correct method name
-    // The service already logs this message
-    // console.log('✅ User database initialized');
+    // Initialize analytics database
+    analyticsDB = new CommandAnalyticsService();
+    await analyticsDB.init(); // Initialize the analytics service
     
     // Load commands and events
     await loadCommands();

@@ -44,6 +44,9 @@ jspm_packages/
 # VS Code
 .vscode/
 
+# Database files
+data/*.db
+
 # OS generated files
 .DS_Store
 .DS_Store?

@@ -1,7 +1,27 @@
 import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
-import UserDatabaseService from '../services/userDatabaseService.js';
+import CommandAnalyticsService from '../services/commandAnalyticsService.js';
 
-const userDB = new UserDatabaseService();
+// Create a singleton instance that will be initialized before use
+let analyticsDB;
+let isInitialized = false;
+
+// Initialize function to be called when needed
+async function getAnalyticsDB() {
+    if (!analyticsDB) {
+        analyticsDB = new CommandAnalyticsService();
+    }
+    
+    if (!isInitialized) {
+        try {
+            await analyticsDB.init();
+            isInitialized = true;
+        } catch (error) {
+            console.error('Error initializing analytics database:', error);
+        }
+    }
+    
+    return analyticsDB;
+}
 
 export default {
     data: new SlashCommandBuilder()
@@ -11,7 +31,7 @@ export default {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('stats')
-                .setDescription('View subscription statistics')
+                .setDescription('View command usage statistics')
         )
         .addSubcommand(subcommand =>
             subcommand
@@ -20,29 +40,22 @@ export default {
                 .addUserOption(option =>
                     option
                         .setName('target')
-                        .setDescription('The user to check')
+                        .setDescription('The user to view')
                         .setRequired(true)
                 )
-        )
-        .addSubcommand(subcommand =>
-            subcommand
-                .setName('revenue')
-                .setDescription('View revenue analytics')
         ),
     
     async execute(interaction) {
         try {
+            // Get the selected subcommand
             const subcommand = interaction.options.getSubcommand();
-
+            
             switch (subcommand) {
                 case 'stats':
                     await handleStats(interaction);
                     break;
                 case 'user':
                     await handleUserInfo(interaction);
-                    break;
-                case 'revenue':
-                    await handleRevenue(interaction);
                     break;
                 default:
                     await interaction.reply({ content: 'Unknown subcommand', ephemeral: true });
@@ -63,69 +76,63 @@ export default {
 };
 
 async function handleStats(interaction) {
-    const stats = await userDB.getSubscriptionStats();
-    
-    const embed = new EmbedBuilder()
-        .setColor(0x0099ff)
-        .setTitle('📊 FightBot Subscription Statistics')
-        .addFields(
-            { name: '👥 Total Users', value: stats.totalUsers.toString(), inline: true },
-            { name: '⭐ Premium Users', value: stats.activeSubscriptions.toString(), inline: true },
-            { name: '📈 Conversion Rate', value: `${((stats.activeSubscriptions / stats.totalUsers) * 100).toFixed(1)}%`, inline: true },
-            { name: '💰 Monthly Revenue', value: `$${(stats.activeSubscriptions * 4.99).toFixed(2)}`, inline: true },
-            { name: '📅 This Month', value: stats.newUsersThisMonth.toString(), inline: true },
-            { name: '🔄 Renewals', value: stats.renewalsThisMonth.toString(), inline: true }
-        )
-        .setTimestamp();
-
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    try {
+        // Make sure analytics DB is initialized
+        const db = await getAnalyticsDB();
+        
+        // Get stats only if DB is available
+        const stats = db.db ? await db.getCommandStats() : [];
+        const totalCommands = db.db ? await db.getTotalCommandCount() : 0;
+        
+        // Format the stats data
+        let commandList = '';
+        if (stats && stats.length > 0) {
+            stats.slice(0, 10).forEach(cmd => {
+                commandList += `${cmd.command_name}: ${cmd.usage_count} uses\n`;
+            });
+        } else {
+            commandList = 'No commands tracked yet';
+        }
+        
+        const embed = new EmbedBuilder()
+            .setColor(0x0099ff)
+            .setTitle('📊 FightBot Command Usage Statistics')
+            .addFields(
+                { name: '📈 Total Commands Used', value: (totalCommands || 0).toString(), inline: false },
+                { name: '🔝 Top Commands', value: commandList, inline: false },
+                { name: '🔒 Analytics Note', value: 'Only tracking command usage, no user data collected', inline: false }
+            )
+            .setTimestamp();
+            
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    } catch (error) {
+        console.error('Error getting command stats:', error);
+        
+        const embed = new EmbedBuilder()
+            .setColor(0xff9900)
+            .setTitle('📊 Command Statistics')
+            .setDescription('Command statistics are not available yet. Try again after using some commands.')
+            .addFields(
+                { name: '🔒 Privacy Note', value: 'FightBot only tracks anonymous command usage, not user data' }
+            )
+            .setTimestamp();
+            
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
 }
 
 async function handleUserInfo(interaction) {
     const targetUser = interaction.options.getUser('target');
-    const userData = await userDB.getUserByDiscordId(targetUser.id);
-    
-    if (!userData) {
-        const embed = new EmbedBuilder()
-            .setColor(0xff9900)
-            .setTitle('👤 User Not Found')
-            .setDescription(`${targetUser.username} is not in the FightBot database.`);
-        
-        return interaction.reply({ embeds: [embed], ephemeral: true });
-    }
-
-    const embed = new EmbedBuilder()
-        .setColor(userData.subscription_status === 'active' ? 0x00ff00 : 0xff9900)
-        .setTitle(`👤 ${targetUser.username}'s Account`)
-        .addFields(
-            { name: '📊 Status', value: userData.subscription_status === 'active' ? 'Premium ✅' : 'Free 📝', inline: true },
-            { name: '📅 Joined', value: new Date(userData.created_at).toDateString(), inline: true },
-            { name: '🔢 Commands', value: userData.command_count?.toString() || '0', inline: true },
-            { name: '💳 Customer ID', value: userData.stripe_customer_id || 'None', inline: true }
-        );
-
-    if (userData.subscription_end) {
-        embed.addFields({ name: '📆 Expires', value: new Date(userData.subscription_end).toDateString(), inline: true });
-    }
-
-    await interaction.reply({ embeds: [embed], ephemeral: true });
-}
-
-async function handleRevenue(interaction) {
-    const revenueData = await userDB.getRevenueAnalytics();
     
     const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle('💰 Revenue Analytics')
+        .setColor(0x0099ff)
+        .setTitle(`👤 ${targetUser.username}`)
+        .setDescription('User tracking has been disabled to protect privacy. Only anonymous command usage is tracked.')
         .addFields(
-            { name: '📊 Monthly Revenue', value: `$${revenueData.monthlyRevenue.toFixed(2)}`, inline: true },
-            { name: '📈 YTD Revenue', value: `$${revenueData.yearToDateRevenue.toFixed(2)}`, inline: true },
-            { name: '🎯 Average LTV', value: `$${revenueData.averageLifetimeValue.toFixed(2)}`, inline: true },
-            { name: '📉 Churn Rate', value: `${revenueData.churnRate.toFixed(1)}%`, inline: true },
-            { name: '💎 Retention', value: `${revenueData.retentionRate.toFixed(1)}%`, inline: true },
-            { name: '📅 Total Payments', value: revenueData.totalPayments.toString(), inline: true }
+            { name: '🔒 Privacy Policy', value: 'FightBot no longer collects individual user data', inline: false },
+            { name: '📊 Analytics', value: 'Only anonymous command usage statistics are collected', inline: false }
         )
         .setTimestamp();
-
+        
     await interaction.reply({ embeds: [embed], ephemeral: true });
 }

@@ -19,13 +19,20 @@ class UserDatabaseService {
     async init() {
         return new Promise((resolve, reject) => {
             const dbPath = path.join(__dirname, '..', 'data', 'fightbot.db');
-            this.db = new sqlite3.Database(dbPath, (err) => {
+            this.db = new sqlite3.Database(dbPath, async (err) => {
                 if (err) {
                     console.error('Error opening database:', err.message);
                     reject(err);
                 } else {
-                    console.log('✅ User database initialized');
-                    resolve();
+                    try {
+                        // Create database tables if they don't exist
+                        await this.createTables();
+                        console.log('✅ User database initialized');
+                        resolve();
+                    } catch (tableErr) {
+                        console.error('Error creating database tables:', tableErr.message);
+                        reject(tableErr);
+                    }
                 }
             });
         });
@@ -33,33 +40,17 @@ class UserDatabaseService {
 
     async createTables() {
         return new Promise((resolve, reject) => {
-            const createUsersTable = `
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    discord_id TEXT UNIQUE NOT NULL,
-                    discord_username TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    last_login DATETIME,
-                    preferences TEXT DEFAULT '{}'
-                )
-            `;
-
+            // Only create a simple usage stats table without user references
             const createUsageTable = `
-                CREATE TABLE IF NOT EXISTS usage_stats (
+                CREATE TABLE IF NOT EXISTS command_analytics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    command_name TEXT,
-                    usage_type TEXT,
-                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (user_id) REFERENCES users (id)
+                    command_name TEXT NOT NULL,
+                    usage_count INTEGER DEFAULT 1,
+                    last_used DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             `;
 
-            this.db.exec(`
-                ${createUsersTable};
-                ${createUsageTable};
-            `, (err) => {
+            this.db.exec(createUsageTable, (err) => {
                 if (err) {
                     reject(err);
                 } else {
