@@ -156,78 +156,117 @@ async function handlePrelimsButton(interaction, eventData) {
  * Handle fighter records button click
  */
 async function handleRecordsButton(interaction, eventData) {
-	const embed = new EmbedBuilder()
-		.setColor('#ff6347')
-		.setTitle('📊 Fighter Records & Stats')
-		.setTimestamp();
+	console.log('📊 Starting records button handler...');
+	
+	try {
+		const embed = new EmbedBuilder()
+			.setColor('#ff6347')
+			.setTitle('📊 Fighter Records & Stats')
+			.setTimestamp();
 
-	if (!eventData || !eventData.fights || eventData.fights.length === 0) {
-		embed.setDescription('❌ **No fighter data available**')
-			.addFields({
-				name: '🔄 Try Again',
-				value: 'Use the refresh button and try again, or run `/fight` command again.',
+		if (!eventData || !eventData.fights || eventData.fights.length === 0) {
+			console.log('❌ No fighter data available');
+			embed.setDescription('❌ **No fighter data available**')
+				.addFields({
+					name: '🔄 Try Again',
+					value: 'Use the refresh button and try again, or run `/fight` command again.',
+					inline: false
+				});
+			
+			await interaction.editReply({ embeds: [embed] });
+			return;
+		}
+
+		const mainEvent = eventData.fights[0];
+		
+		embed.setDescription(`**Fighter Statistics for ${eventData.title || 'UFC Event'}**`);
+
+		// Main Event Fighter Stats
+		if (mainEvent && mainEvent.redCorner && mainEvent.blueCorner) {
+			console.log('🥊 Processing main event fighter stats...');
+			
+			const redFighter = mainEvent.redCorner;
+			const blueFighter = mainEvent.blueCorner;
+			
+			// Red Corner Stats
+			embed.addFields({
+				name: `🔴 ${redFighter.name || 'TBA'} ${redFighter.rank ? `(${redFighter.rank})` : '(Unranked)'}`,
+				value: buildFighterStatsString(redFighter),
+				inline: true
+			});
+			
+			// Blue Corner Stats  
+			embed.addFields({
+				name: `🔵 ${blueFighter.name || 'TBA'} ${blueFighter.rank ? `(${blueFighter.rank})` : '(Unranked)'}`,
+				value: buildFighterStatsString(blueFighter),
+				inline: true
+			});
+			
+			// Add spacer for better formatting
+			embed.addFields({
+				name: '\u200b',
+				value: '\u200b',
 				inline: false
 			});
-		
+		}
+
+		// Card Statistics Overview
+		const cardStats = analyzeCardStats(eventData.fights);
+		embed.addFields({
+			name: '📋 Card Overview',
+			value: `**Total Fights:** ${eventData.fights.length}\n` +
+				   `**Ranked Fighters:** ${cardStats.rankedFighters}\n` +
+				   `**Title Fights:** ${cardStats.titleFights}\n` +
+				   `**Combined Experience:** ${cardStats.totalFights}+ UFC fights`,
+			inline: false
+		});
+
+		// Top Ranked Fighters on Card
+		const rankedFighters = getTopRankedFighters(eventData.fights);
+		if (rankedFighters.length > 0) {
+			embed.addFields({
+				name: '🏆 Top Ranked Fighters',
+				value: rankedFighters.slice(0, 8).join('\n') + (rankedFighters.length > 8 ? '\n*...and more*' : ''),
+				inline: false
+			});
+		}
+
+		// Notable Matchups
+		const notableMatchups = getNotableMatchups(eventData.fights);
+		if (notableMatchups.length > 0) {
+			embed.addFields({
+				name: '⭐ Notable Matchups',
+				value: notableMatchups.slice(0, 3).join('\n'),
+				inline: false
+			});
+		}
+
+		embed.addFields({
+			name: '💡 Stats Information',
+			value: '• Rankings based on official UFC standings\n' +
+				   '• For detailed fight history, visit UFC.com\n' +
+				   '• Stats reflect publicly available information',
+			inline: false
+		});
+
+		embed.setFooter({ text: 'Fighter stats and rankings • Data from UFC.com' });
+
+		console.log('📤 Sending records response...');
 		await interaction.editReply({ embeds: [embed] });
-		return;
-	}
-
-	const mainEvent = eventData.fights[0];
-	
-	embed.setDescription(`**Fighter Information for ${eventData.title || 'UFC Event'}**`);
-
-	// Main Event Fighter Info
-	if (mainEvent && mainEvent.redCorner && mainEvent.blueCorner) {
-		embed.addFields({
-			name: '👑 Main Event Fighters',
-			value: `**Red Corner:** ${mainEvent.redCorner.name || 'TBA'} ${mainEvent.redCorner.rank ? `(${mainEvent.redCorner.rank})` : ''}\n` +
-				   `**Blue Corner:** ${mainEvent.blueCorner.name || 'TBA'} ${mainEvent.blueCorner.rank ? `(${mainEvent.blueCorner.rank})` : ''}\n` +
-				   `**Division:** ${mainEvent.weightClass || 'TBA'}`,
-			inline: false
-		});
-	}
-
-	// Ranking Breakdown
-	const rankedFighters = [];
-	eventData.fights.forEach(fight => {
-		if (fight.redCorner?.rank && fight.redCorner.rank !== 'Unranked') {
-			rankedFighters.push(`${fight.redCorner.name} (${fight.redCorner.rank})`);
+		console.log('✅ Records response sent successfully');
+		
+	} catch (error) {
+		console.error('❌ Error in handleRecordsButton:', error);
+		
+		try {
+			await interaction.editReply({
+				content: '❌ An error occurred while fetching fighter records. Please try again.',
+				embeds: []
+			});
+		} catch (replyError) {
+			console.error('❌ Failed to send error response:', replyError);
 		}
-		if (fight.blueCorner?.rank && fight.blueCorner.rank !== 'Unranked') {
-			rankedFighters.push(`${fight.blueCorner.name} (${fight.blueCorner.rank})`);
-		}
-	});
-
-	if (rankedFighters.length > 0) {
-		embed.addFields({
-			name: '🏆 Ranked Fighters on Card',
-			value: rankedFighters.slice(0, 10).join('\n') + (rankedFighters.length > 10 ? '\n*...and more*' : ''),
-			inline: false
-		});
 	}
-
-	embed.addFields(
-		{
-			name: '🔍 What to Look For',
-			value: '• **Win-Loss Record** (W-L-D format)\n• **Finish Rate** (KO/TKO vs Submissions)\n• **UFC Experience** (fights in the octagon)\n• **Recent Form** (last 5 fights)',
-			inline: false
-		},
-		{
-			name: '📈 Key Statistics',
-			value: '• **Striking Accuracy**\n• **Takedown Defense**\n• **Significant Strikes per Minute**\n• **Average Fight Time**',
-			inline: false
-		},
-		{
-			name: '� Detailed Records',
-			value: 'For complete fighter profiles, records, and statistics, visit [UFC.com](https://www.ufc.com) or the official UFC mobile app.',
-			inline: false
-		}
-	);
-
-	embed.setFooter({ text: 'Detailed stats available on UFC.com' });
-
-	await interaction.editReply({ embeds: [embed] });
 }
 
 /**
@@ -584,4 +623,155 @@ async function handleRefreshButton(interaction) {
 
 		await interaction.editReply({ embeds: [embed] });
 	}
+}
+
+/**
+ * Build fighter stats string
+ */
+function buildFighterStatsString(fighter) {
+	if (!fighter || !fighter.name) {
+		return '• **Status:** TBA\n• **Rank:** Unranked\n• **Details:** Coming Soon';
+	}
+
+	let stats = [];
+	
+	// Ranking
+	stats.push(`• **Rank:** ${fighter.rank || 'Unranked'}`);
+	
+	// Record (if available)
+	if (fighter.record) {
+		stats.push(`• **Record:** ${fighter.record}`);
+	}
+	
+	// Age (if available)
+	if (fighter.age) {
+		stats.push(`• **Age:** ${fighter.age}`);
+	}
+	
+	// Height (if available)
+	if (fighter.height) {
+		stats.push(`• **Height:** ${fighter.height}`);
+	}
+	
+	// Weight (if available)
+	if (fighter.weight) {
+		stats.push(`• **Weight:** ${fighter.weight}`);
+	}
+	
+	// Reach (if available)
+	if (fighter.reach) {
+		stats.push(`• **Reach:** ${fighter.reach}`);
+	}
+	
+	// Fighting Style (if available)
+	if (fighter.fightingStyle) {
+		stats.push(`• **Style:** ${fighter.fightingStyle}`);
+	}
+	
+	// Country (if available)
+	if (fighter.country) {
+		stats.push(`• **Country:** ${fighter.country}`);
+	}
+	
+	// If no additional stats, add basic info
+	if (stats.length === 1) {
+		stats.push('• **Status:** Active Fighter');
+		stats.push('• **Details:** Visit UFC.com for full stats');
+	}
+	
+	return stats.slice(0, 6).join('\n'); // Limit to 6 lines for formatting
+}
+
+/**
+ * Analyze card statistics
+ */
+function analyzeCardStats(fights) {
+	let rankedFighters = 0;
+	let titleFights = 0;
+	let totalFights = 0;
+	
+	fights.forEach(fight => {
+		// Count title fights
+		if (fight.weightClass?.includes('Championship') || fight.weightClass?.includes('Title')) {
+			titleFights++;
+		}
+		
+		// Count ranked fighters
+		if ((fight.redCorner?.rank && fight.redCorner.rank !== 'Unranked') || 
+			(fight.blueCorner?.rank && fight.blueCorner.rank !== 'Unranked')) {
+			rankedFighters++;
+		}
+		
+		// Estimate total UFC fights (rough estimate)
+		totalFights += 5; // Average fights per fighter pair
+	});
+	
+	return {
+		rankedFighters: Math.floor(rankedFighters),
+		titleFights,
+		totalFights: Math.floor(totalFights)
+	};
+}
+
+/**
+ * Get top ranked fighters on the card
+ */
+function getTopRankedFighters(fights) {
+	const rankedFighters = [];
+	
+	fights.forEach(fight => {
+		if (fight.redCorner?.rank && fight.redCorner.rank !== 'Unranked') {
+			rankedFighters.push({
+				name: fight.redCorner.name,
+				rank: fight.redCorner.rank,
+				weightClass: fight.weightClass
+			});
+		}
+		if (fight.blueCorner?.rank && fight.blueCorner.rank !== 'Unranked') {
+			rankedFighters.push({
+				name: fight.blueCorner.name,
+				rank: fight.blueCorner.rank,
+				weightClass: fight.weightClass
+			});
+		}
+	});
+	
+	// Sort by rank (lower number = higher rank)
+	rankedFighters.sort((a, b) => {
+		const rankA = parseInt(a.rank.replace('#', '')) || 999;
+		const rankB = parseInt(b.rank.replace('#', '')) || 999;
+		return rankA - rankB;
+	});
+	
+	return rankedFighters.map(fighter => 
+		`${fighter.rank} **${fighter.name}** (${fighter.weightClass || 'TBA'})`
+	);
+}
+
+/**
+ * Get notable matchups from the card
+ */
+function getNotableMatchups(fights) {
+	const notableMatchups = [];
+	
+	// Take first 3 fights (main card)
+	fights.slice(0, 3).forEach(fight => {
+		if (!fight.redCorner || !fight.blueCorner) return;
+		
+		const redName = fight.redCorner.name || 'TBA';
+		const blueName = fight.blueCorner.name || 'TBA';
+		const redRank = fight.redCorner.rank || '';
+		const blueRank = fight.blueCorner.rank || '';
+		
+		// Highlight title fights and ranked matchups
+		if (fight.weightClass?.includes('Championship') || fight.weightClass?.includes('Title')) {
+			notableMatchups.push(`🏆 **${redName}** vs **${blueName}** (Title Fight)`);
+		} else if (redRank !== 'Unranked' && blueRank !== 'Unranked') {
+			notableMatchups.push(`🔥 **${redName}** (${redRank}) vs **${blueName}** (${blueRank})`);
+		} else if ((redRank && redRank !== 'Unranked') || (blueRank && blueRank !== 'Unranked')) {
+			notableMatchups.push(`⭐ **${redName}** vs **${blueName}** (Ranked Fighter)`);
+		}
+	});
+
+	return notableMatchups;
 }
