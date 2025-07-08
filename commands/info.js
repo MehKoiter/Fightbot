@@ -14,7 +14,7 @@ export default {
                 {
                     name: '📋 Available Commands',
                     value: '• `/fight` - Get upcoming UFC event details\n' +
-                           '• `/premium` - Learn about Premium features\n' +
+                           '• `/features` - See all available features\n' +
                            '• `/support` - Get help and contact information\n' +
                            '• `/info` - Show this information',
                     inline: false
@@ -28,7 +28,7 @@ export default {
                 },
                 {
                     name: '🚀 Getting Started',
-                    value: '1. Use `/fight` to see the next UFC event\n2. Click the interactive buttons for more details\n3. Check out `/premium` for advanced features',
+                    value: '1. Use `/fight` to see the next UFC event\n2. Click the interactive buttons for more details\n3. Check out `/features` to see all available features',
                     inline: false
                 }
             )
@@ -43,7 +43,7 @@ export default {
         if (isFree()) {
             infoEmbed.addFields({
                 name: '💎 Want More?',
-                value: 'Use `/premium` to see all Premium features and pricing!',
+                value: 'Use `/features` to see all available features and ways to support us!',
                 inline: false
             });
         }
