@@ -4,7 +4,6 @@ import { token } from './config.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import NotificationService from './services/notificationService.js';
 import UserDatabaseService from './services/userDatabaseService.js';
 import { VERSION_CONFIG } from './config/version.js';
 
@@ -26,8 +25,7 @@ const client = new Client({
 // New commands will be added later.
 client.commands = new Collection();
 
-// Initialize notification service
-let notificationService;
+// Initialize database service
 let userDB;
 
 /**
@@ -112,10 +110,6 @@ async function initialize() {
     // Tells the client to login to discord given its token.
     try {
         await client.login(token);
-        
-        // Initialize notification service after successful login
-        notificationService = new NotificationService(client);
-        client.notifications = notificationService;
         
         console.log(`✅ FightBot initialized successfully! All features are FREE! 🎉`);
         
