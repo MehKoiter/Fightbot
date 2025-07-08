@@ -165,6 +165,29 @@ async function handleRecordsButton(interaction, eventData) {
 			.setTimestamp();
 
 		if (!eventData || !eventData.fights || eventData.fights.length === 0) {
+			console.log('❌ No cached data found, fetching fresh data...');
+			
+			try {
+				const ufcService = new UfcService();
+				const freshEvent = await ufcService.getUpcomingEvent();
+				
+				if (freshEvent && freshEvent.fights && freshEvent.fights.length > 0) {
+					console.log('✅ Fresh data retrieved successfully');
+					eventData = freshEvent;
+					
+					// Cache the fresh data for future use
+					const cacheKey = `${interaction.user.id}_${interaction.channelId}`;
+					eventCache.set(cacheKey, freshEvent);
+				} else {
+					console.log('❌ No fresh data available either');
+				}
+			} catch (error) {
+				console.error('❌ Error fetching fresh data:', error.message);
+			}
+		}
+		
+		// Still no data after trying to fetch fresh
+		if (!eventData || !eventData.fights || eventData.fights.length === 0) {
 			console.log('❌ No fighter data available');
 			embed.setDescription('❌ **No fighter data available**')
 				.addFields({
