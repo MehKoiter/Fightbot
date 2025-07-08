@@ -100,8 +100,9 @@ async function initialize() {
     
     // Initialize user database
     userDB = new UserDatabaseService();
-    await userDB.initialize();
-    console.log('✅ User database initialized');
+    await userDB.init(); // Using the correct method name
+    // The service already logs this message
+    // console.log('✅ User database initialized');
     
     // Load commands and events
     await loadCommands();
