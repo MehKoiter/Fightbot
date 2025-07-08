@@ -129,22 +129,22 @@ export default {
                 .addComponents(
                     new ButtonBuilder()
                         .setCustomId('fight_prelims')
-                        .setLabel('📺 Prelims')
+                        .setLabel('Prelims')
                         .setStyle(ButtonStyle.Primary)
                         .setEmoji('📺'),
                     new ButtonBuilder()
                         .setCustomId('fight_records')
-                        .setLabel('📊 Fighter Records')
+                        .setLabel('Fighter Records')
                         .setStyle(ButtonStyle.Secondary)
                         .setEmoji('📊'),
                     new ButtonBuilder()
                         .setCustomId('fight_venue')
-                        .setLabel('🏟️ Venue Info')
+                        .setLabel('Venue Info')
                         .setStyle(ButtonStyle.Secondary)
                         .setEmoji('🏟️'),
                     new ButtonBuilder()
                         .setCustomId('fight_predictions')
-                        .setLabel('🎯 Fight Analysis')
+                        .setLabel('Fight Analysis')
                         .setStyle(ButtonStyle.Success)
                         .setEmoji('🎯')
                 );
@@ -153,16 +153,16 @@ export default {
                 .addComponents(
                     new ButtonBuilder()
                         .setCustomId('fight_schedule')
-                        .setLabel('⏰ Fight Times')
+                        .setLabel('Fight Times')
                         .setStyle(ButtonStyle.Secondary)
                         .setEmoji('⏰'),
                     new ButtonBuilder()
                         .setCustomId('fight_refresh')
-                        .setLabel('🔄 Refresh Data')
+                        .setLabel('Refresh Data')
                         .setStyle(ButtonStyle.Secondary)
                         .setEmoji('🔄'),
                     new ButtonBuilder()
-                        .setLabel('🌐 View on UFC.com')
+                        .setLabel('View on UFC.com')
                         .setStyle(ButtonStyle.Link)
                         .setURL(event.url || 'https://www.ufc.com/events')
                         .setEmoji('🌐')
