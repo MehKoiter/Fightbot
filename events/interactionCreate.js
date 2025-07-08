@@ -83,8 +83,17 @@ async function handleButtonInteraction(interaction) {
 	await interaction.deferReply({ ephemeral: true });
 
 	// Get cached event data
-	const cacheKey = eventCache.constructor.getKey(interaction);
+	const cacheKey = `${interaction.user.id}_${interaction.channelId}`;
 	const eventData = eventCache.get(cacheKey);
+	
+	// Debug logging
+	console.log(`🔍 Button interaction: ${customId}`);
+	console.log(`🔑 Cache key: ${cacheKey}`);
+	console.log(`📊 Event data found:`, eventData ? 'Yes' : 'No');
+	if (eventData) {
+		console.log(`📝 Event title: ${eventData.title}`);
+		console.log(`🥊 Number of fights: ${eventData.fights?.length || 0}`);
+	}
 
 	switch (customId) {
 		case 'fight_prelims':
@@ -261,11 +270,35 @@ async function handlePredictionsButton(interaction, eventData) {
 		.setTitle('🎯 Fight Analysis & Insights')
 		.setTimestamp();
 
+	// If no cached data, try to fetch fresh data
+	if (!eventData || !eventData.fights || eventData.fights.length === 0) {
+		console.log('🔄 No cached data found, fetching fresh data...');
+		
+		try {
+			const ufcService = new UfcService();
+			const freshEvent = await ufcService.getUpcomingEvent();
+			
+			if (freshEvent && freshEvent.fights && freshEvent.fights.length > 0) {
+				console.log('✅ Fresh data retrieved successfully');
+				eventData = freshEvent;
+				
+				// Cache the fresh data for future use
+				const cacheKey = `${interaction.user.id}_${interaction.channelId}`;
+				eventCache.set(cacheKey, freshEvent);
+			} else {
+				console.log('❌ No fresh data available either');
+			}
+		} catch (error) {
+			console.error('❌ Error fetching fresh data:', error.message);
+		}
+	}
+
+	// Still no data after trying to fetch fresh
 	if (!eventData || !eventData.fights || eventData.fights.length === 0) {
 		embed.setDescription('❌ **No fight data available for analysis**')
 			.addFields({
 				name: '🔄 Try Again',
-				value: 'Use the refresh button and try again, or run `/fight` command again.',
+				value: 'Use the refresh button and try again, or run `/fight` command again to cache fresh data.',
 				inline: false
 			});
 		

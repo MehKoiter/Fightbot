@@ -20,6 +20,8 @@ class EventCache {
             expiresAt
         });
         
+        console.log(`💾 Cache SET - Key: ${key}, Data: ${eventData?.title || 'Unknown'}, Expires: ${new Date(expiresAt).toLocaleTimeString()}`);
+        
         // Clean up expired entries
         this.cleanup();
     }
@@ -33,14 +35,17 @@ class EventCache {
         const entry = this.cache.get(key);
         
         if (!entry) {
+            console.log(`🔍 Cache MISS - Key: ${key} not found`);
             return null;
         }
 
         if (Date.now() > entry.expiresAt) {
+            console.log(`⏰ Cache EXPIRED - Key: ${key} expired at ${new Date(entry.expiresAt).toLocaleTimeString()}`);
             this.cache.delete(key);
             return null;
         }
 
+        console.log(`✅ Cache HIT - Key: ${key}, Data: ${entry.data?.title || 'Unknown'}`);
         return entry.data;
     }
 

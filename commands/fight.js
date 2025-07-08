@@ -169,8 +169,13 @@ export default {
                 );
 
             // Store event data in cache for button interactions
-            const cacheKey = eventCache.constructor.getKey(interaction);
+            const cacheKey = `${interaction.user.id}_${interaction.channelId}`;
             eventCache.set(cacheKey, event);
+            
+            // Debug logging
+            console.log(`💾 Storing event data in cache with key: ${cacheKey}`);
+            console.log(`📝 Event stored: ${event.title}`);
+            console.log(`🥊 Fights stored: ${event.fights?.length || 0}`);
 
             // Send all embeds with interactive buttons
             await interaction.editReply({ 
