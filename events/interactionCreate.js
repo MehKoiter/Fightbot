@@ -265,111 +265,137 @@ async function handleVenueButton(interaction, eventData) {
  * Handle fight predictions/analysis button click
  */
 async function handlePredictionsButton(interaction, eventData) {
-	const embed = new EmbedBuilder()
-		.setColor('#ff1493')
-		.setTitle('🎯 Fight Analysis & Insights')
-		.setTimestamp();
+	console.log('🎯 Starting predictions button handler...');
+	
+	try {
+		const embed = new EmbedBuilder()
+			.setColor('#ff1493')
+			.setTitle('🎯 Fight Analysis & Insights')
+			.setTimestamp();
 
-	// If no cached data, try to fetch fresh data
-	if (!eventData || !eventData.fights || eventData.fights.length === 0) {
-		console.log('🔄 No cached data found, fetching fresh data...');
+		// If no cached data, try to fetch fresh data
+		if (!eventData || !eventData.fights || eventData.fights.length === 0) {
+			console.log('🔄 No cached data found, fetching fresh data...');
+			
+			try {
+				const ufcService = new UfcService();
+				const freshEvent = await ufcService.getUpcomingEvent();
+				
+				if (freshEvent && freshEvent.fights && freshEvent.fights.length > 0) {
+					console.log('✅ Fresh data retrieved successfully');
+					eventData = freshEvent;
+					
+					// Cache the fresh data for future use
+					const cacheKey = `${interaction.user.id}_${interaction.channelId}`;
+					eventCache.set(cacheKey, freshEvent);
+				} else {
+					console.log('❌ No fresh data available either');
+				}
+			} catch (error) {
+				console.error('❌ Error fetching fresh data:', error.message);
+			}
+		}
+
+		// Still no data after trying to fetch fresh
+		if (!eventData || !eventData.fights || eventData.fights.length === 0) {
+			console.log('❌ No data available for analysis');
+			embed.setDescription('❌ **No fight data available for analysis**')
+				.addFields({
+					name: '🔄 Try Again',
+					value: 'Use the refresh button and try again, or run `/fight` command again to cache fresh data.',
+					inline: false
+				});
+			
+			await interaction.editReply({ embeds: [embed] });
+			console.log('✅ Sent no-data response');
+			return;
+		}
+
+		console.log('📊 Processing analysis with data...');
+		
+		// Analyze the main event (first fight)
+		const mainEvent = eventData.fights[0];
+		const totalFights = eventData.fights.length;
+
+		embed.setDescription(`**Analysis for ${eventData.title || 'UFC Event'}**`);
+
+		// Main Event Analysis
+		if (mainEvent && mainEvent.redCorner && mainEvent.blueCorner) {
+			console.log('🥊 Analyzing main event...');
+			const redFighter = mainEvent.redCorner.name || 'TBA';
+			const blueFighter = mainEvent.blueCorner.name || 'TBA';
+			const redRank = mainEvent.redCorner.rank || 'Unranked';
+			const blueRank = mainEvent.blueCorner.rank || 'Unranked';
+
+			embed.addFields({
+				name: '👑 Main Event Breakdown',
+				value: `**${redFighter}** (${redRank}) vs **${blueFighter}** (${blueRank})\n` +
+					   `**Division:** ${mainEvent.weightClass || 'TBA'}\n` +
+					   `**Stakes:** ${mainEvent.weightClass?.includes('Championship') || mainEvent.weightClass?.includes('Title') ? 'Title Fight' : 'Contender Fight'}`,
+				inline: false
+			});
+
+			// Ranking Analysis
+			const rankingAnalysis = analyzeRankings(redRank, blueRank);
+			if (rankingAnalysis) {
+				embed.addFields({
+					name: '📊 Ranking Analysis',
+					value: rankingAnalysis,
+					inline: false
+				});
+			}
+		}
+
+		console.log('📋 Analyzing card...');
+		
+		// Card Depth Analysis
+		const cardAnalysis = analyzeCard(eventData.fights);
+		embed.addFields({
+			name: '📋 Card Analysis',
+			value: `**Total Fights:** ${totalFights}\n` +
+				   `**Main Card Quality:** ${cardAnalysis.quality}\n` +
+				   `**Championship Fights:** ${cardAnalysis.titleFights}\n` +
+				   `**Ranked Matchups:** ${cardAnalysis.rankedFights}`,
+			inline: false
+		});
+
+		// Key Matchups
+		console.log('🔥 Identifying key matchups...');
+		const keyMatchups = identifyKeyMatchups(eventData.fights);
+		if (keyMatchups.length > 0) {
+			embed.addFields({
+				name: '🔥 Key Matchups to Watch',
+				value: keyMatchups.join('\n'),
+				inline: false
+			});
+		}
+
+		embed.addFields({
+			name: '💡 Analysis Notes',
+			value: '• Rankings and analysis based on available UFC data\n' +
+				   '• For detailed fighter stats, visit UFC.com\n' +
+				   '• Betting odds available on licensed sportsbooks',
+			inline: false
+		});
+
+		embed.setFooter({ text: 'Analysis based on fight card data • Always gamble responsibly' });
+
+		console.log('📤 Sending analysis response...');
+		await interaction.editReply({ embeds: [embed] });
+		console.log('✅ Analysis response sent successfully');
+		
+	} catch (error) {
+		console.error('❌ Error in handlePredictionsButton:', error);
 		
 		try {
-			const ufcService = new UfcService();
-			const freshEvent = await ufcService.getUpcomingEvent();
-			
-			if (freshEvent && freshEvent.fights && freshEvent.fights.length > 0) {
-				console.log('✅ Fresh data retrieved successfully');
-				eventData = freshEvent;
-				
-				// Cache the fresh data for future use
-				const cacheKey = `${interaction.user.id}_${interaction.channelId}`;
-				eventCache.set(cacheKey, freshEvent);
-			} else {
-				console.log('❌ No fresh data available either');
-			}
-		} catch (error) {
-			console.error('❌ Error fetching fresh data:', error.message);
+			await interaction.editReply({
+				content: '❌ An error occurred while generating the analysis. Please try again.',
+				embeds: []
+			});
+		} catch (replyError) {
+			console.error('❌ Failed to send error response:', replyError);
 		}
 	}
-
-	// Still no data after trying to fetch fresh
-	if (!eventData || !eventData.fights || eventData.fights.length === 0) {
-		embed.setDescription('❌ **No fight data available for analysis**')
-			.addFields({
-				name: '🔄 Try Again',
-				value: 'Use the refresh button and try again, or run `/fight` command again to cache fresh data.',
-				inline: false
-			});
-		
-		await interaction.editReply({ embeds: [embed] });
-		return;
-	}
-
-	// Analyze the main event (first fight)
-	const mainEvent = eventData.fights[0];
-	const totalFights = eventData.fights.length;
-
-	embed.setDescription(`**Analysis for ${eventData.title || 'UFC Event'}**`);
-
-	// Main Event Analysis
-	if (mainEvent && mainEvent.redCorner && mainEvent.blueCorner) {
-		const redFighter = mainEvent.redCorner.name || 'TBA';
-		const blueFighter = mainEvent.blueCorner.name || 'TBA';
-		const redRank = mainEvent.redCorner.rank || 'Unranked';
-		const blueRank = mainEvent.blueCorner.rank || 'Unranked';
-
-		embed.addFields({
-			name: '👑 Main Event Breakdown',
-			value: `**${redFighter}** (${redRank}) vs **${blueFighter}** (${blueRank})\n` +
-				   `**Division:** ${mainEvent.weightClass || 'TBA'}\n` +
-				   `**Stakes:** ${mainEvent.weightClass?.includes('Championship') || mainEvent.weightClass?.includes('Title') ? 'Title Fight' : 'Contender Fight'}`,
-			inline: false
-		});
-
-		// Ranking Analysis
-		const rankingAnalysis = analyzeRankings(redRank, blueRank);
-		if (rankingAnalysis) {
-			embed.addFields({
-				name: '📊 Ranking Analysis',
-				value: rankingAnalysis,
-				inline: false
-			});
-		}
-	}
-
-	// Card Depth Analysis
-	const cardAnalysis = analyzeCard(eventData.fights);
-	embed.addFields({
-		name: '📋 Card Analysis',
-		value: `**Total Fights:** ${totalFights}\n` +
-			   `**Main Card Quality:** ${cardAnalysis.quality}\n` +
-			   `**Championship Fights:** ${cardAnalysis.titleFights}\n` +
-			   `**Ranked Matchups:** ${cardAnalysis.rankedFights}`,
-		inline: false
-	});
-
-	// Key Matchups
-	const keyMatchups = identifyKeyMatchups(eventData.fights);
-	if (keyMatchups.length > 0) {
-		embed.addFields({
-			name: '🔥 Key Matchups to Watch',
-			value: keyMatchups.join('\n'),
-			inline: false
-		});
-	}
-
-	embed.addFields({
-		name: '💡 Analysis Notes',
-		value: '• Rankings and analysis based on available UFC data\n' +
-			   '• For detailed fighter stats, visit UFC.com\n' +
-			   '• Betting odds available on licensed sportsbooks',
-		inline: false
-	});
-
-	embed.setFooter({ text: 'Analysis based on fight card data • Always gamble responsibly' });
-
-	await interaction.editReply({ embeds: [embed] });
 }
 
 /**
