@@ -1,6 +1,6 @@
 /**
- * FightBot Premium Test Suite
- * Tests all premium features and services
+ * FightBot FREE Test Suite
+ * Tests all features (everything is FREE now!)
  */
 
 import UfcService from './services/ufcService.js';
@@ -17,7 +17,8 @@ class FightBotTester {
     }
 
     async runAllTests() {
-        console.log('🧪 Starting FightBot Premium Test Suite...\n');
+        console.log('🧪 Starting FightBot FREE Test Suite...\n');
+        console.log('🎉 All features are FREE! Testing comprehensive functionality...\n');
         
         await this.testVersionConfig();
         await this.testUfcService();

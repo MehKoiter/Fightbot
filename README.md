@@ -1,15 +1,17 @@
-# 🥊 FightBot Premium - Ultimate UFC Discord Bot
+# 🥊 FightBot - Ultimate FREE UFC Discord Bot
 
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-14.8.0-blue.svg)](https://discord.js.org/)
 [![License](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0--premium-purple.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-1.0.0--free-green.svg)](package.json)
 
 ![FightBot Logo](img/mmaGloveSmall.png)
 
-FightBot Premium is the most advanced UFC Discord bot available, offering comprehensive fight data, real-time betting odds, AI-powered analytics, and personalized features for the ultimate MMA experience.
+**🎉 ALL FEATURES ARE NOW COMPLETELY FREE! 🎉**
 
-## 🌟 Premium Features
+FightBot is the ultimate UFC Discord bot offering comprehensive fight data, real-time betting odds, advanced analytics, and all premium features - **completely FREE for everyone!**
+
+## 🌟 Features (All FREE!)
 
 ### 🥊 Advanced Fight Data
 - **Interactive Fight Cards** - Rich embeds with clickable buttons for detailed exploration
@@ -58,8 +60,8 @@ FightBot Premium is the most advanced UFC Discord bot available, offering compre
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/fightbot-premium.git
-   cd fightbot-premium
+   git clone https://github.com/yourusername/fightbot-free.git
+   cd fightbot-free
    ```
 
 2. **Install dependencies**
@@ -90,13 +92,15 @@ FightBot Premium is the most advanced UFC Discord bot available, offering compre
 - `/info` - Show bot information and version details
 - `/help` - Display comprehensive help and feature list
 
-### Premium Commands
+### Advanced Commands (All FREE!)
 - `/odds` - Real-time betting odds from multiple sportsbooks
-- `/analytics` - Advanced fight analytics and AI predictions
+- `/analytics` - Advanced fight analytics and predictions
 - `/preferences` - Manage personal settings and notifications
 - `/export` - Export fight data in various formats
-- `/premium` - View premium dashboard and features
-- `/support` - Access premium support and contact information
+- `/features` - View all available features (everything is FREE!)
+- `/donate` - Support FightBot development via Patreon
+- `/account` - View your account information
+- `/support` - Access support and contact information
 
 ## 🎮 Interactive Features
 
@@ -118,37 +122,53 @@ FightBot Premium is the most advanced UFC Discord bot available, offering compre
 ## ⚙️ Configuration
 
 ### Version Settings
-The bot supports both Free and Premium versions through the `config/version.js` file:
+FightBot is now completely FREE with all features enabled:
 
 ```javascript
 export const VERSION_CONFIG = {
-    version: "1.0.0-premium",
-    type: "PREMIUM", // FREE or PREMIUM
+    version: "1.0.0-free",
+    type: "FREE", // All features are FREE
     features: {
-        // Core features (available in both versions)
+        // ALL features are available for FREE
         basicFightCard: true,
         upcomingEvents: true,
-        // Premium features
         advancedAnalytics: true,
         betOddsTracking: true,
         exportData: true,
-        personalizedFeed: true
+        personalizedFeed: true,
+        detailedStats: true,
+        customNotifications: true,
+        // ... all features enabled!
     }
 };
 ```
 
 ### User Preferences
-Premium users can customize their experience:
+All users can customize their experience:
 - **Notifications** - Fight results, odds changes, favorite fighters
-- **Display** - Timezone, odds format, spoiler settings
+- **Display** - Timezone, odds format, spoiler settings  
 - **Betting** - Preferred sportsbooks, alert thresholds
 - **Favorites** - Fighters, weight classes, organizations
+
+## ❤️ Support FightBot
+
+**All features are FREE, but you can support development:**
+- **[Patreon](https://patreon.com/fightbot)** - Monthly donations to fund development
+- **Spread the word** - Tell other MMA fans about FightBot
+- **Report bugs** - Help us improve by reporting issues
+- **Suggest features** - Let us know what you'd like to see next
+
+Your support helps us:
+- Keep the bot running 24/7
+- Add new features faster
+- Improve data accuracy
+- Cover server and API costs
 
 ## 🧪 Testing
 
 Run the comprehensive test suite:
 ```bash
-npm test           # Full premium test suite
+npm test           # Full test suite
 npm run test:simple # Basic functionality test
 npm run test:ufc   # UFC service connectivity test
 ```
@@ -156,30 +176,31 @@ npm run test:ufc   # UFC service connectivity test
 ## 📁 Project Structure
 
 ```
-fightbot-premium/
+fightbot-free/
 ├── commands/          # Slash command implementations
-│   ├── analytics.js   # AI-powered fight analytics
-│   ├── export.js      # Data export functionality
+│   ├── analytics.js   # AI-powered fight analytics (FREE)
+│   ├── export.js      # Data export functionality (FREE)
 │   ├── fight.js       # Main fight card command
 │   ├── help.js        # Comprehensive help system
 │   ├── info.js        # Bot information
-│   ├── odds.js        # Betting odds tracking
-│   ├── preferences.js # User preference management
-│   ├── premium.js     # Premium feature dashboard
+│   ├── odds.js        # Betting odds tracking (FREE)
+│   ├── preferences.js # User preference management (FREE)
+│   ├── features.js    # Feature showcase (all FREE)
+│   ├── donate.js      # Patreon support info
 │   └── support.js     # Support and contact info
 ├── config/            # Configuration files
-│   └── version.js     # Version and feature flags
+│   └── version.js     # Version and feature flags (all FREE)
 ├── events/            # Discord event handlers
 │   ├── interactionCreate.js # Button and command handling
 │   └── ready.js       # Bot initialization
 ├── services/          # Core business logic
-│   ├── bettingOddsService.js    # Betting odds integration
+│   ├── bettingOddsService.js    # Betting odds integration (FREE)
 │   ├── eventCache.js            # Event data caching
 │   ├── fightParser.js           # Fight data parsing
-│   ├── notificationService.js   # Premium notifications
+│   ├── notificationService.js   # Notifications (FREE)
 │   ├── ufcService.js            # UFC data fetching
-│   └── userPreferencesService.js # User settings
-└── test-premium.js    # Comprehensive test suite
+│   └── userPreferencesService.js # User settings (FREE)
+└── test-free.js       # Comprehensive test suite
 ```
 
 ## 🔧 Technical Features
@@ -207,50 +228,47 @@ fightbot-premium/
 ## 🎯 Roadmap
 
 ### Upcoming Features
-- **Live Fight Updates** - Real-time round-by-round scoring
-- **Multi-Event Tracking** - Follow multiple promotions
-- **Custom Dashboards** - Personalized fight tracking
-- **Advanced Integrations** - Third-party service connections
-- **Mobile App Support** - Companion mobile application
+- **Live Fight Updates** - Real-time round-by-round scoring (FREE)
+- **Multi-Event Tracking** - Follow multiple promotions (FREE)
+- **Custom Dashboards** - Personalized fight tracking (FREE)
+- **Advanced Integrations** - Third-party service connections (FREE)
+- **Mobile App Support** - Companion mobile application (FREE)
 
 ### API Enhancements
-- **Real Sportsbook Integration** - Live API connections
-- **Enhanced Fighter Database** - Comprehensive fighter profiles
-- **Video Highlights** - Fight clip integration
-- **Social Features** - Community predictions and discussions
+- **Real Sportsbook Integration** - Live API connections (FREE)
+- **Enhanced Fighter Database** - Comprehensive fighter profiles (FREE)
+- **Video Highlights** - Fight clip integration (FREE)
+- **Social Features** - Community predictions and discussions (FREE)
 
-## 📊 Feature Comparison
+## 🎉 All Features Are FREE!
 
-| Feature | Free Version | Premium Version |
-|---------|--------------|-----------------|
-| Fight Cards | ✅ Basic (5 fights) | ✅ Complete (unlimited) |
-| Fighter Stats | ✅ Basic records | ✅ Detailed analytics |
-| Betting Odds | ❌ | ✅ Live tracking |
-| Analytics | ❌ | ✅ AI-powered |
-| Notifications | ❌ | ✅ Custom alerts |
-| Data Export | ❌ | ✅ Multiple formats |
-| Support | 📧 Email only | 🌟 Priority support |
+**Every feature that was previously premium is now completely FREE:**
+- ✅ **Complete Fight Cards** - Unlimited fights and events
+- ✅ **Detailed Fighter Stats** - Advanced analytics and records
+- ✅ **Live Betting Odds** - Real-time tracking from multiple sources
+- ✅ **Advanced Analytics** - AI-powered predictions and insights
+- ✅ **Custom Notifications** - Personalized alerts and reminders
+- ✅ **Data Export** - Download in multiple formats
+- ✅ **Priority Support** - Fast response times for everyone
+- ✅ **All Premium Features** - No restrictions whatsoever
 
-## 💰 Premium Pricing
-
-- **Monthly**: $9.99/month
-- **Yearly**: $99.99/year (2 months free!)
-- **Lifetime**: $299.99 (one-time payment)
-
-Contact support for enterprise pricing and custom solutions.
+**No subscriptions, no paywalls, no limitations - just great UFC data for everyone!**
 
 ## 📞 Support
 
-### Premium Support
-- **Priority Response** - 24-48 hour response time
-- **Email Support** - premium@fightbot.com
+### Community Support
+- **Free for Everyone** - All features available to all users
+- **Email Support** - support@fightbot.com
 - **Discord Community** - Join our support server
 - **Documentation** - Comprehensive guides and tutorials
-
-### General Support
-- **Email** - support@fightbot.com
 - **Bug Reports** - Include detailed reproduction steps
 - **Feature Requests** - We love hearing your ideas!
+
+### Support Development ❤️
+- **Patreon** - [patreon.com/fightbot](https://patreon.com/fightbot)
+- **Spread the Word** - Tell others about FightBot
+- **Report Bugs** - Help us improve
+- **Suggest Features** - Share your ideas
 
 ## 🛡️ Security & Privacy
 

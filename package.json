@@ -1,16 +1,23 @@
 {
-  "name": "fightbot-premium",
-  "version": "1.0.0-premium",
-  "description": "FightBot Premium - Ultimate UFC Discord Bot (Premium Version)",
+  "name": "fightbot-free",
+  "version": "1.0.0-free",
+  "description": "FightBot Free - Ultimate UFC Discord Bot (All Features FREE!)",
   "main": "index.js",
   "type":"module",
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
     "deploy": "node deploy-commands.js",
-    "test": "node test-premium.js",
+    "deploy:global": "node deploy-commands.js --global",
+    "test": "node test-free.js",
     "test:simple": "node simple-test.js",
-    "test:ufc": "node -e \"import('./services/ufcService.js').then(m => new m.default().getUpcomingEvent().then(console.log))\""
+    "test:ufc": "node -e \"import('./services/ufcService.js').then(m => new m.default().getUpcomingEvent().then(console.log))\"",
+    "setup": "node setup.js",
+    "setup:init": "node setup.js init-db",
+    "setup:check": "node setup.js check-env",
+    "setup:test": "node setup.js test-db",
+    "build": "echo 'No build step required for Node.js'",
+    "postinstall": "npm run setup:init"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +25,14 @@
     "axios": "^1.3.4",
     "cheerio": "^1.0.0-rc.12",
     "discord.js": "^14.8.0",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "sqlite3": "^5.1.6",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
   }
 }

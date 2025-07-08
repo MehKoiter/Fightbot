@@ -22,11 +22,25 @@ const rest = new REST({ version: '10' }).setToken(token);
 	try {
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-		// The put method is used to fully refresh all commands in the guild with the current set
-		const data = await rest.put(
-			Routes.applicationGuildCommands(clientId, guildId),
-			{ body: commands },
-		);
+		// Check if global deployment is requested
+		const isGlobal = process.argv.includes('--global');
+		
+		let data;
+		if (isGlobal) {
+			console.log('🌍 Deploying commands globally...');
+			// Deploy globally (takes up to 1 hour to propagate)
+			data = await rest.put(
+				Routes.applicationCommands(clientId),
+				{ body: commands },
+			);
+		} else {
+			console.log(`🏠 Deploying commands to guild ${guildId}...`);
+			// Deploy to specific guild (instant)
+			data = await rest.put(
+				Routes.applicationGuildCommands(clientId, guildId),
+				{ body: commands },
+			);
+		}
 
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {
