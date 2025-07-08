@@ -1,5 +1,7 @@
 # 🥊 FightBot - Ultimate FREE UFC Discord Bot
 
+> **UPDATE:** Migration to the new modular architecture is now complete! See the [ARCHITECTURE.md](ARCHITECTURE.md) and [MIGRATION.md](MIGRATION.md) files for details about the new structure.
+
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-14.8.0-blue.svg)](https://discord.js.org/)
 [![License](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
