@@ -29,10 +29,9 @@ class UfcService extends BaseService {
             const container = await import('./serviceContainer.js');
             this.container = container.default;
             
-            // Initialize parser
-            const { FightParserService } = await import('./fightParserService.js');
-            this.parser = new FightParserService();
-
+            // Get the parser from container instead of creating a new instance
+            this.parser = this.container.get('fightParser');
+            
             await super.init();
         } catch (error) {
             this.handleError(error, 'init', true);

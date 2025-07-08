@@ -10,8 +10,9 @@ import { fightParser } from './fightParserService.js';
 import { analytics } from './commandAnalyticsService.js';
 import { interactionHandler } from './interactionHandlerService.js';
 
-// Import logger
+// Import logger and error handler
 import logger from '../utils/logger.js';
+import errorHandler from '../utils/errorHandler.js';
 
 /**
  * Register all services with the container
@@ -37,6 +38,9 @@ export async function registerServices() {
     
     // Register interaction handler service
     container.register('interactionHandler', () => interactionHandler, true);
+    
+    // Register error handler service
+    container.register('errorHandler', () => errorHandler, true);
     
     // Initialize all services
     await container.initializeAll();

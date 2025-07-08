@@ -72,9 +72,24 @@ class FightCommand extends BaseCommand {
             });
             
         } catch (error) {
-            // Handle error properly using the error handler
-            const errorHandler = this.container.get('errorHandler');
-            await errorHandler.handleCommandError(interaction, error, 'fight');
+            try {
+                // Handle error properly using the error handler
+                const errorHandler = this.container.get('errorHandler');
+                await errorHandler.handleCommandError(interaction, error, 'fight');
+            } catch (handlerError) {
+                // Fallback if error handler is not available
+                console.error('Error in error handler:', handlerError);
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ 
+                        content: '❌ An error occurred while processing your request.',
+                        ephemeral: true 
+                    });
+                } else if (interaction.deferred && !interaction.replied) {
+                    await interaction.editReply({ 
+                        content: '❌ An error occurred while processing your request.'
+                    });
+                }
+            }
         }
     }
     
