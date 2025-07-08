@@ -10,111 +10,127 @@ const rankClass = '.c-listing-fight__corner-rank';
 const imgClass = '.c-hero__image';
 
 export class FightCorner {
-  name; // String
-  rank; // String
+  constructor(name = '', rank = '') {
+    this.name = name;
+    this.rank = rank;
+  }
 }
 
 export class Fight {
-  redCorner; // FightCorner
-  blueCorner; // FightCorner
-  weightClass; // String
+  constructor(redCorner = new FightCorner(), blueCorner = new FightCorner(), weightClass = '') {
+    this.redCorner = redCorner;
+    this.blueCorner = blueCorner;
+    this.weightClass = weightClass;
+  }
 }
 
 export class Event {
-  title; // string;
-  subtitle; // string;
-  date; // string;
-  imgUrl; // string;
-  fights; // Fight[];
+  constructor(title = '', subtitle = '', date = '', imgUrl = '', fights = []) {
+    this.title = title;
+    this.subtitle = subtitle;
+    this.date = date;
+    this.imgUrl = imgUrl;
+    this.fights = fights;
+  }
 }
 
-export class fightParser {
+export class FightParser {
     /**
-     * 
-     * @param {string} html 
-     * @returns {String[]} list of links
+     * Parse upcoming events from UFC events page
+     * @param {string} html HTML content from UFC events page
+     * @returns {string[]} Array of event links
      */
     parseEvents(html) {
-        parsedHTML = Cheerio.load(html);
+        const parsedHTML = Cheerio.load(html);
+        const links = [];
 
-        // List of String Links
-        links = [];
-
-        parsedHTML('.c-card-event--result__headline').map((eventHeadline) => {
-            // Cheerio element
-            const child = eventHeadline.firstChild;
-            const link = `${baseUrl}${child.attribs['href']}`;
-            links.push(link);
+        // Look for upcoming events
+        parsedHTML('.c-card-event--result__headline a, .c-card-event__headline a').each((_, element) => {
+            const href = parsedHTML(element).attr('href');
+            if (href) {
+                const link = href.startsWith('http') ? href : `${baseUrl}${href}`;
+                links.push(link);
+            }
         });
 
         return links;
-    };
+    }
 
     /**
-     * 
-     * @param {Cheerio.CheerioAPI} cheerioApi
-     * @returns {String}
+     * Parse event image from the event page
+     * @param {Cheerio.CheerioAPI} cheerioApi Cheerio API instance
+     * @returns {string} Image URL
      */
-    parseImage (cheerioApi) {
-        imgHero = cheerioApi(imgClass);
-        img = imgHero.find('img');
-        return img?.attr('src') ?? '';
-    };
+    parseImage(cheerioApi) {
+        const imgHero = cheerioApi(imgClass);
+        const img = imgHero.find('img');
+        let imgSrc = img?.attr('src') || '';
+        
+        // Handle relative URLs
+        if (imgSrc && !imgSrc.startsWith('http')) {
+            imgSrc = imgSrc.startsWith('//') ? `https:${imgSrc}` : `${baseUrl}${imgSrc}`;
+        }
+        
+        return imgSrc;
+    }
 
     /**
-     * 
-     * @param {String} html 
-     * @returns {Event}
+     * Parse a single event page for detailed fight information
+     * @param {string} html HTML content from event page
+     * @returns {Event} Parsed event with fights
      */
-    parseEvent (html) {
-        parsedHTML = Cheerio.load(html);
+    parseEvent(html) {
+        const parsedHTML = Cheerio.load(html);
 
         // Get fighter data from the parsedHTML
-        fighters = parsedHTML(fighterClass).map((el) => parsedHTML(el).text().trim().replace(/\n/g, '')).get();
+        const fighters = parsedHTML(fighterClass).map((_, el) => 
+            parsedHTML(el).text().trim().replace(/\n/g, '')
+        ).get();
 
         // Get rank data from the parsedHTML
-        ranks = parsedHTML(rankClass).map((el) => parsedHTML(el).text().trim().replace(/\n/g, '')).get();
+        const ranks = parsedHTML(rankClass).map((_, el) => 
+            parsedHTML(el).text().trim().replace(/\n/g, '')
+        ).get();
 
         // Get weightClasses data from the parsedHTML
-        weightClasses = parsedHTML(weightClass).map((_, el) => parsedHTML(el).text().trim().replace(/\n/g, '')).get();
+        const weightClasses = parsedHTML(weightClass).map((_, el) => 
+            parsedHTML(el).text().trim().replace(/\n/g, '').replace(/ +/g, ' ')
+        ).get();
         
-        i = 0;
-        weightClasses.map((weightClass) => {
-            fight = {
-            weightClass: weightClass.replace(/ +/g, ' ').trim(),
-            redCorner: {
-                name: fighters[i],
-                rank: ranks[i],
-            },
-            blueCorner: {
-                name: fighters[i + 1],
-                rank: ranks[i + 1],
-            },
-            };
-
-            i += 2;
-
-            return fight;
-        });
+        const fights = [];
+        
+        // Create fight objects
+        for (let i = 0; i < weightClasses.length && i * 2 + 1 < fighters.length; i++) {
+            const fight = new Fight(
+                new FightCorner(fighters[i * 2] || '', ranks[i * 2] || ''),
+                new FightCorner(fighters[i * 2 + 1] || '', ranks[i * 2 + 1] || ''),
+                weightClasses[i] || ''
+            );
+            fights.push(fight);
+        }
 
         // Get title data from the parsedHTML
-        title = parsedHTML(titleClass).text().trim().replace(/\n/g, '');
+        const title = parsedHTML(titleClass).text().trim().replace(/\n/g, '');
 
         // Get subtitle data from the parsedHTML
-        subtitle = parsedHTML(subtitleClass).text().trim().replace(/\n/g, '').replace(/ +/g, ' ');
+        const subtitle = parsedHTML(subtitleClass).text().trim().replace(/\n/g, '').replace(/ +/g, ' ');
 
         // Get date data from the parsedHTML
-        date = parsedHTML(dateClass).text().trim();
+        const date = parsedHTML(dateClass).text().trim();
 
         // Get imgUrl data from the parsedHTML
-        imgUrl = parseImage(parsedHTML);
+        const imgUrl = this.parseImage(parsedHTML);
 
-        return {
-            title,
-            subtitle,
-            date,
-            fights,
-            imgUrl,
-        };
-    };
+        return new Event(title, subtitle, date, imgUrl, fights);
+    }
+
+    /**
+     * Get the next upcoming event link
+     * @param {string[]} eventLinks Array of event links
+     * @returns {string|null} Next upcoming event link or null
+     */
+    getNextUpcomingEvent(eventLinks) {
+        // For now, return the first link as it should be the most recent/upcoming
+        return eventLinks.length > 0 ? eventLinks[0] : null;
+    }
 }
