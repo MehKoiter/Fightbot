@@ -5,7 +5,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "npm start"
+startCommand = "npm run debug-env"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
