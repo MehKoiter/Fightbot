@@ -187,7 +187,26 @@ initialize();
 
 /**
  * Create a simple HTTP server for Render port binding
- * This is required for Render Web Services but doesn't affect Discord bot functionality
+ * 
+ * DEPLOYMENT FIX: This server solves the "Port scan timeout" error on Render.com
+ * 
+ * Background:
+ * - Render Web Services require binding to at least one port
+ * - Discord bots don't naturally bind to ports (they use WebSocket connections)
+ * - Without port binding, Render deployment fails with timeout error
+ * 
+ * Solution:
+ * - Creates lightweight HTTP server alongside Discord bot
+ * - Binds to process.env.PORT (required by Render) or defaults to 3000
+ * - Provides health check endpoints for monitoring
+ * - Doesn't interfere with Discord bot functionality
+ * 
+ * Endpoints:
+ * - GET / - Basic health check
+ * - GET /health - Detailed status (bot info, uptime, version)
+ * 
+ * This approach allows deployment as "Web Service" on Render's free tier
+ * Alternative would be "Background Worker" but requires paid plan
  */
 function createHealthServer() {
     const server = http.createServer((req, res) => {

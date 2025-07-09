@@ -69,6 +69,125 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
    npm start
    ```
 
+## 🚀 Production Deployment
+
+### Render.com Deployment (Recommended)
+
+FightBot is optimized for deployment on Render.com with built-in health monitoring.
+
+#### Prerequisites
+- GitHub repository with your FightBot code
+- Render.com account (free tier available)
+- Discord bot token and application credentials
+
+#### Deployment Steps
+
+1. **Connect Repository**
+   - Go to [render.com](https://render.com) and sign in
+   - Click "New +" → "Web Service"
+   - Connect your GitHub repository
+   - Select the `main` branch
+
+2. **Configure Service**
+   - **Name**: `fightbot-discord-bot`
+   - **Environment**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Instance Type**: Free tier (sufficient for Discord bots)
+
+3. **Set Environment Variables**
+   Add these variables in the Environment section:
+   ```
+   DISCORD_TOKEN=your_bot_token_here
+   CLIENT_ID=your_client_id_here  
+   GUILD_ID=your_guild_id_here
+   NODE_ENV=production
+   ```
+
+4. **Deploy**
+   - Click "Create Web Service"
+   - Render will automatically build and deploy
+   - Monitor logs for successful startup: `Ready! Logged in as FightBot#xxxx`
+
+#### Health Monitoring
+
+FightBot includes a built-in HTTP health server that:
+- ✅ Satisfies Render's port binding requirements
+- ✅ Provides health check endpoint at `/health`
+- ✅ Returns bot status, uptime, and version info
+- ✅ Doesn't interfere with Discord bot functionality
+
+**Health Check Response:**
+```json
+{
+  "status": "healthy",
+  "bot": "FightBot#9833", 
+  "uptime": 3600,
+  "version": "1.0.0-free",
+  "timestamp": "2025-07-09T14:30:00.000Z"
+}
+```
+
+#### Troubleshooting Deployment
+
+**Port Binding Issues:**
+- ✅ **Fixed**: FightBot automatically binds to `process.env.PORT` or port 3000
+- The health server runs alongside the Discord bot without conflicts
+
+**Environment Variable Issues:**
+- Ensure all required variables are set in Render dashboard
+- Check deployment logs for missing variable errors
+- Variables should match your local `.env` file exactly
+
+**Bot Not Responding:**
+- Check deployment logs for login errors
+- Verify Discord token is valid and has correct permissions
+- Ensure bot is invited to your server with proper permissions
+
+### Alternative Deployment Options
+
+#### Railway.com
+- Similar setup to Render
+- May require additional port configuration
+- Environment variables set in dashboard
+
+#### Heroku
+- Add `Procfile`: `web: npm start`
+- Configure environment variables in settings
+- Enable health checks for monitoring
+
+#### VPS/Dedicated Server
+- Install Node.js 18+
+- Use PM2 for process management: `pm2 start index.js --name fightbot`
+- Configure reverse proxy if needed
+- Set up SSL certificates for HTTPS
+
+### Post-Deployment Checklist
+
+- [ ] Bot shows as online in Discord
+- [ ] `/fight` command works and returns data
+- [ ] Health endpoint responds at your-app-url/health
+- [ ] No errors in deployment logs
+- [ ] Interactive buttons function properly
+- [ ] Bot responds to commands in your server
+
+### Monitoring & Maintenance
+
+**Render Monitoring:**
+- Check deployment logs regularly
+- Monitor health endpoint uptime
+- Watch for memory/CPU usage
+
+**Discord Monitoring:**
+- Verify bot stays online 24/7
+- Test commands periodically
+- Monitor for API rate limiting
+
+**Updates:**
+- Push updates to main branch for auto-deployment
+- Test in development environment first
+- Monitor logs during deployments
+
 ## 📋 Available Commands
 
 ### Core Commands
