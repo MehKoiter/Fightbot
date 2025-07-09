@@ -11,13 +11,14 @@
     "deploy:global": "node deploy-commands.js --global",
     "test": "node test-free.js",
     "test:simple": "node simple-test.js",
+    "test:production": "node production-test.js",
     "test:ufc": "node -e \"import('./services/ufcService.js').then(m => new m.default().getUpcomingEvent().then(console.log))\"",
     "setup": "node setup.js",
     "setup:init": "node setup.js init-db",
     "setup:check": "node setup.js check-env",
     "setup:test": "node setup.js test-db",
     "build": "echo 'No build step required for Node.js'",
-    "postinstall": "npm run setup:init"
+    "postinstall": "npm run setup:init --omit=dev"
   },
   "author": "",
   "license": "ISC",
