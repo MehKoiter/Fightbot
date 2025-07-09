@@ -64,8 +64,18 @@ node tests/performance/fighter-timing.test.js
 Test individual components in isolation:
 - **Basic Functionality**: Core bot features and commands
 - **UFC Service**: API interactions and data fetching
+- **UFC Stats Fighter Service**: Fighter data management and profiles *(New)*
 - **Cache System**: Data caching and retrieval
 - **Simple Features**: Basic command functionality
+
+**Fighter Service Tests**:
+```bash
+# Test the new UFC Stats Fighter Service
+node tests/unit/ufc-stats-service.test.js
+
+# Test legacy UFC service
+node tests/unit/ufc-service.test.js
+```
 
 ### 🔗 Integration Tests  
 Test component interactions and workflows:

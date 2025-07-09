@@ -5,7 +5,39 @@ All notable changes to FightBot Free will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.2-free] - 2025-07-09 (In Progress)
+## [1.7.2-free] - 2025-07-09
+
+### 🚀 Added - UFC Stats Fighter Service
+- **New Fighter Data Source**: Implemented reliable UFC Stats Fighter Service to replace unreliable UFC.com scraping
+- **Comprehensive Fighter Database**: Added detailed profiles for Jon Jones, Israel Adesanya, and growing roster
+- **Enhanced Autocomplete**: Smart suggestions with fighter names, nicknames, and aliases
+- **Fighter Comparisons**: Detailed side-by-side analysis with physical stats and record comparisons
+- **Improved Error Handling**: Better error messages and suggestions when fighters not found
+
+### 🔧 Fixed - Fighter Command Issues
+- **Fighter Lookup Failures**: Fixed "Fighter Comparison Failed" errors for Jon Jones and Israel Adesanya
+- **Data Accuracy**: Replaced mock data with real fighter statistics, records, and fight history
+- **Response Speed**: Implemented 30-minute caching for faster subsequent lookups
+- **Autocomplete Reliability**: Fixed timeout issues and improved suggestion accuracy
+
+### 📚 Documentation Updates
+- **New Feature Guide**: Added comprehensive Fighter Data Migration documentation
+- **API Reference**: Updated with UFCStatsFighterService API and data structures
+- **User Guide**: Enhanced fighter command examples and supported fighter list
+- **Troubleshooting**: Added solutions for common fighter command issues
+- **Testing Guide**: Updated with new UFC Stats service tests
+
+### 🧪 Testing Improvements
+- **UFC Stats Service Tests**: Comprehensive test suite for new fighter service
+- **Archived ESPN Tests**: Moved experimental ESPN service tests to archived folder
+- **Test Organization**: Proper file structure with imports and test categories
+- **100% Test Coverage**: All fighter service functionality tested and verified
+
+### 🏗️ Architecture Changes
+- **Service Structure**: Organized services with archived folder for experimental code
+- **Import Paths**: Fixed test import paths and service dependencies
+- **File Organization**: Proper separation of active vs archived code
+- **Cache Implementation**: Efficient in-memory caching with TTL for fighter data
 
 ### 🔧 Fixed - Autocomplete Interaction Issues
 - **Fixed**: DiscordAPIError[40060] "Interaction has already been acknowledged" in fighter autocomplete

@@ -54,23 +54,32 @@ Get detailed fighter information, comparisons, and analysis.
 
 **Fighter Comparison:**
 ```
-/fighter name:Jon Jones compare:Islam Makhachev
+/fighter name:Jon Jones compare:Israel Adesanya
 ```
 
 **Features:**
 - 📊 Complete fight records and statistics
-- 🥊 Fighting style analysis (striking, grappling, ground game)
-- 📈 Performance metrics and analytics
-- 🎬 Career highlights and achievements
-- 🔮 AI-powered fight predictions
+- 🥊 Detailed fighter profiles with achievements
+- 📈 Physical stats (height, weight, reach, stance)
+- 🎬 Recent fight history and results
 - ⚔️ Side-by-side fighter comparisons
+- 🔍 Smart autocomplete with fighter nicknames
+
+**Supported Fighters:**
+- Jon Jones ("Bones") - UFC Heavyweight Champion
+- Israel Adesanya ("The Last Stylebender") - Former UFC Middleweight Champion
+- More fighters being added regularly
+
+**Autocomplete Examples:**
+- Type "Jon" → suggests "Jon Jones"
+- Type "Bones" → suggests "Jon Jones"
+- Type "Stylebender" → suggests "Israel Adesanya"
+- Type "Izzy" → suggests "Israel Adesanya"
 
 **Interactive Buttons:**
-- **📊 Detailed Stats** - Advanced performance metrics
-- **🎬 Fight Highlights** - Career highlights and memorable moments
-- **⚔️ Compare Fighter** - Launch comparison tool
-- **🔮 Fight Prediction** - AI-powered matchup analysis
-- **🥊 Fighting Styles** - Detailed style breakdown
+- **🔄 Refresh Data** - Update fighter information
+- **� Full Stats** - Complete performance metrics
+- **🥊 Fight Analysis** - Detailed fighting style breakdown
 
 ### `/info` - Bot Information
 Display comprehensive bot information and features.

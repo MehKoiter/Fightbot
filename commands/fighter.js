@@ -6,7 +6,7 @@
  */
 
 import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import FighterService from "../services/fighterService.js";
+import UFCStatsFighterService from "../services/ufcStatsFighterService.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -47,27 +47,16 @@ export default {
                     return [];
                 }
                 
-                // Mock fighter suggestions - in production this would search a database
-                const fighters = [
-                    'Jon Jones', 'Islam Makhachev', 'Alexander Volkanovski',
-                    'Leon Edwards', 'Aljamain Sterling', 'Charles Oliveira',
-                    'Kamaru Usman', 'Israel Adesanya', 'Robert Whittaker',
-                    'Colby Covington', 'Max Holloway', 'Jose Aldo',
-                    'Francis Ngannou', 'Ciryl Gane', 'Tom Aspinall',
-                    'Sean O\'Malley', 'Petr Yan', 'Cory Sandhagen'
-                ];
-
-                const filtered = fighters
-                    .filter(fighter => 
-                        fighter.toLowerCase().includes(focusedValue.toLowerCase())
-                    )
+                // Use UFC Stats service for autocomplete suggestions
+                const ufcStatsService = new UFCStatsFighterService();
+                const suggestions = ufcStatsService.getAutocompleteSuggestions(focusedValue);
+                
+                return suggestions
                     .slice(0, 25) // Discord autocomplete limit
                     .map(fighter => ({
                         name: fighter,
                         value: fighter
                     }));
-
-                return filtered;
             })();
 
             // Race against timeout
@@ -104,7 +93,7 @@ export default {
         const compareFighter = interaction.options.getString('compare');
         
         try {
-            const fighterService = new FighterService();
+            const ufcStatsService = new UFCStatsFighterService();
             
             // For faster response, try without defer first for simple cases
             let hasDeferred = false;
@@ -152,7 +141,7 @@ export default {
             if (compareFighter) {
                 await safeDeferReply();
                 
-                const comparison = await fighterService.compareFighters(fighterName, compareFighter);
+                const comparison = await ufcStatsService.compareFighters(fighterName, compareFighter);
                 
                 if (!comparison) {
                     const errorEmbed = new EmbedBuilder()
@@ -184,13 +173,13 @@ export default {
             try {
                 // Quick attempt without defer (for cached data)
                 fighter = await Promise.race([
-                    fighterService.getFighterProfile(fighterName),
+                    ufcStatsService.getFighterProfile(fighterName),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2500))
                 ]);
             } catch (timeoutError) {
                 // If it takes too long, defer and try again
                 await safeDeferReply();
-                fighter = await fighterService.getFighterProfile(fighterName);
+                fighter = await ufcStatsService.getFighterProfile(fighterName);
             }
 
             if (!fighter) {
@@ -253,53 +242,46 @@ export default {
             .addFields(
                 {
                     name: '📊 Fight Record',
-                    value: `**${fighter.record.wins}-${fighter.record.losses}-${fighter.record.draws}**\n` +
-                           `Wins: ${fighter.record.wins} (${fighter.record.winsByKO} KO, ${fighter.record.winsBySubmission} Sub, ${fighter.record.winsByDecision} Dec)\n` +
-                           `Win Rate: ${((fighter.record.wins / (fighter.record.wins + fighter.record.losses)) * 100).toFixed(1)}%`,
+                    value: `**${fighter.record}**\n` +
+                           `Wins: ${fighter.wins} | Losses: ${fighter.losses} | Draws: ${fighter.draws}\n` +
+                           `Win Rate: ${((fighter.wins / (fighter.wins + fighter.losses)) * 100).toFixed(1)}%`,
                     inline: true
                 },
                 {
                     name: '📏 Physical Stats',
-                    value: `**Height:** ${fighter.physicalStats.height}\n` +
-                           `**Weight:** ${fighter.physicalStats.weight}\n` +
-                           `**Reach:** ${fighter.physicalStats.reach}\n` +
-                           `**Stance:** ${fighter.physicalStats.stance}\n` +
-                           `**Age:** ${fighter.physicalStats.age}`,
+                    value: `**Height:** ${fighter.height}\n` +
+                           `**Weight:** ${fighter.weight}\n` +
+                           `**Reach:** ${fighter.reach}\n` +
+                           `**Stance:** ${fighter.stance}`,
                     inline: true
                 },
                 {
-                    name: '🥊 Striking Stats',
-                    value: `**Accuracy:** ${fighter.fightingStyle.striking.accuracy}\n` +
-                           `**Defense:** ${fighter.fightingStyle.striking.defense}\n` +
-                           `**Per Minute:** ${fighter.fightingStyle.striking.avgPerMinute}`,
+                    name: '🏟️ Division & Status',
+                    value: `**Division:** ${fighter.weightClass}\n` +
+                           `**Team:** ${fighter.team}\n` +
+                           `**Status:** ${fighter.currentChampion ? 'Current Champion' : fighter.formerChampion ? 'Former Champion' : 'Contender'}`,
                     inline: true
                 },
                 {
-                    name: '🤼 Grappling Stats',
-                    value: `**TD Accuracy:** ${fighter.fightingStyle.grappling.takedownAccuracy}\n` +
-                           `**TD Defense:** ${fighter.fightingStyle.grappling.takedownDefense}\n` +
-                           `**Avg Per Fight:** ${fighter.fightingStyle.grappling.avgPerFight}`,
-                    inline: true
-                },
-                {
-                    name: '🏆 Recent Achievement',
-                    value: fighter.achievements[0] || 'Professional Fighter',
+                    name: '🏆 Achievements',
+                    value: fighter.achievements.slice(0, 3).join('\n') || 'Professional Fighter',
                     inline: false
                 }
             );
 
-        if (fighter.lastFight) {
+        if (fighter.recentFights && fighter.recentFights.length > 0) {
+            const lastFight = fighter.recentFights[0];
             embed.addFields({
                 name: '⚔️ Last Fight',
-                value: `vs **${fighter.lastFight.opponent}** - ${fighter.lastFight.result}\n` +
-                       `${fighter.lastFight.method} (Round ${fighter.lastFight.round})\n` +
-                       `${fighter.lastFight.date}`,
+                value: `vs **${lastFight.opponent}** - ${lastFight.result}\n` +
+                       `${lastFight.method} (Round ${lastFight.round}, ${lastFight.time})\n` +
+                       `${lastFight.event} | ${lastFight.date}`,
                 inline: false
             });
         }
 
         embed.setTimestamp()
-             .setFooter({ text: 'FightBot • Advanced Fighter Profiles' });
+             .setFooter({ text: 'FightBot • UFC Stats Fighter Profiles' });
 
         return embed;
     },

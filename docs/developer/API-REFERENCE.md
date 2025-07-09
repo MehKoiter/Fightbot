@@ -34,15 +34,51 @@ const event = await ufcService.getUpcomingEvent();
 
 ### FighterService *(Phase 7)*
 **File**: `services/fighterService.js`
-**Purpose**: Advanced fighter data management and analysis
+**Purpose**: Advanced fighter data management and analysis *(Legacy)*
+**Status**: Deprecated - Use UFCStatsFighterService instead
+
+### UFCStatsFighterService *(Current)*
+**File**: `services/ufcStatsFighterService.js`
+**Purpose**: Reliable fighter data with comprehensive profiles
 
 ```javascript
-class FighterService {
+class UFCStatsFighterService {
     async getFighterProfile(name)           // Get detailed fighter profile
-    async searchFighter(query)              // Search for fighters
+    async searchFighter(query)              // Search fighters by name/nickname
     async compareFighters(fighter1, fighter2) // Compare two fighters
-    async getFighterStats(fighterId)        // Get performance statistics
-    async predictFightOutcome(f1, f2)       // AI fight prediction
+    getAutocompleteSuggestions(query)       // Get autocomplete suggestions
+    expandDatabase()                        // Expand fighter database
+}
+```
+
+**Fighter Data Structure**:
+```javascript
+{
+    id: 'fighter-id',
+    name: 'Fighter Name',
+    nickname: 'Fighter Nickname',
+    record: '28-1-0',
+    wins: 28, losses: 1, draws: 0,
+    height: '6\'4"', weight: '238 lbs', reach: '84.5"',
+    stance: 'Orthodox',
+    birthdate: 'July 19, 1987',
+    birthplace: 'Rochester, New York, USA',
+    team: 'Team Name',
+    weightClass: 'Weight Class',
+    currentChampion: true,
+    titles: ['Current Title', 'Former Title'],
+    achievements: ['Achievement 1', 'Achievement 2'],
+    recentFights: [
+        {
+            date: 'Nov 16, 2024',
+            opponent: 'Opponent Name',
+            result: 'W',
+            method: 'TKO',
+            round: 3,
+            time: '4:29',
+            event: 'UFC Event Name'
+        }
+    ]
 }
 ```
 
