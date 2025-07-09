@@ -1,6 +1,6 @@
 /**
- * User Database Service - FREE VERSION
- * Manages basic user tracking and statistics (no authentication required)
+ * User Database Service - Free Version
+ * Manages basic user stats and usage tracking
  */
 
 import sqlite3 from 'sqlite3';
@@ -12,27 +12,17 @@ const __dirname = path.dirname(__filename);
 
 class UserDatabaseService {
     constructor() {
+        this.dbPath = path.join(__dirname, '../data/users.db');
         this.db = null;
-        this.init();
     }
 
-    async init() {
+    async initialize() {
         return new Promise((resolve, reject) => {
-            const dbPath = path.join(__dirname, '..', 'data', 'fightbot.db');
-            this.db = new sqlite3.Database(dbPath, async (err) => {
+            this.db = new sqlite3.Database(this.dbPath, (err) => {
                 if (err) {
-                    console.error('Error opening database:', err.message);
                     reject(err);
                 } else {
-                    try {
-                        // Create database tables if they don't exist
-                        await this.createTables();
-                        console.log('✅ User database initialized');
-                        resolve();
-                    } catch (tableErr) {
-                        console.error('Error creating database tables:', tableErr.message);
-                        reject(tableErr);
-                    }
+                    this.createTables().then(resolve).catch(reject);
                 }
             });
         });
@@ -40,201 +30,98 @@ class UserDatabaseService {
 
     async createTables() {
         return new Promise((resolve, reject) => {
-            // Only create a simple usage stats table without user references
-            const createUsageTable = `
+            // Simple command analytics table - no personal data stored
+            const createAnalyticsTable = `
                 CREATE TABLE IF NOT EXISTS command_analytics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     command_name TEXT NOT NULL,
-                    usage_count INTEGER DEFAULT 1,
-                    last_used DATETIME DEFAULT CURRENT_TIMESTAMP
+                    used_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    server_id TEXT
                 )
             `;
 
-            this.db.exec(createUsageTable, (err) => {
+            this.db.exec(createAnalyticsTable, (err) => {
                 if (err) {
                     reject(err);
                 } else {
+                    console.log('✅ Database tables created successfully');
                     resolve();
                 }
             });
         });
     }
 
-    // User Management
-    async createUser(discordId, discordUsername) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare(`
-                INSERT INTO users (discord_id, discord_username)
-                VALUES (?, ?)
-            `);
-            
-            stmt.run([discordId, discordUsername], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this.lastID);
-                }
-            });
-            stmt.finalize();
-        });
-    }
-
-    async getUserByDiscordId(discordId) {
-        return new Promise((resolve, reject) => {
-            this.db.get(
-                'SELECT * FROM users WHERE discord_id = ?',
-                [discordId],
-                (err, row) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(row);
-                    }
-                }
-            );
-        });
-    }
-
-    async updateLastLogin(discordId) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare(`
-                UPDATE users 
-                SET last_login = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-                WHERE discord_id = ?
-            `);
-            
-            stmt.run([discordId], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this.changes);
-                }
-            });
-            stmt.finalize();
-        });
-    }
-
-    // Usage Tracking
-    async trackUsage(discordId, commandName, usageType) {
-        const user = await this.getUserByDiscordId(discordId);
-        if (!user) return;
-
-        return new Promise((resolve, reject) => {
-            // Simply insert a new usage record (no aggregation needed for free version)
-            const stmt = this.db.prepare(`
-                INSERT INTO usage_stats (user_id, command_name, usage_type) 
-                VALUES (?, ?, ?)
-            `);
-            
-            stmt.run([user.id, commandName, usageType], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this.lastID);
-                }
-            });
-            stmt.finalize();
-        });
-    }
-
-    async getUserUsageStats(discordId, days = 30) {
-        const user = await this.getUserByDiscordId(discordId);
-        if (!user) return null;
-
-        return new Promise((resolve, reject) => {
-            this.db.all(`
-                SELECT 
-                    command_name,
-                    usage_type,
-                    COUNT(*) as usage_count
-                FROM usage_stats 
-                WHERE user_id = ? AND timestamp >= datetime('now', '-${days} days')
-                GROUP BY command_name, usage_type
-                ORDER BY usage_count DESC
-            `, [user.id], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows || []);
-                }
-            });
-        });
-    }
-
-    // User preferences
-    async updateUserPreferences(discordId, preferences) {
-        return new Promise((resolve, reject) => {
-            const stmt = this.db.prepare(`
-                UPDATE users 
-                SET preferences = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE discord_id = ?
-            `);
-            
-            stmt.run([JSON.stringify(preferences), discordId], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this.changes);
-                }
-            });
-            stmt.finalize();
-        });
-    }
-
-    async getUserPreferences(discordId) {
-        const user = await this.getUserByDiscordId(discordId);
-        if (!user) return {};
-
-        try {
-            return JSON.parse(user.preferences || '{}');
-        } catch (e) {
-            console.error('Error parsing user preferences:', e);
-            return {};
+    async logCommandUsage(commandName, serverId = null) {
+        // Check if database is ready
+        if (!this.db) {
+            console.warn('Database not initialized, skipping usage logging');
+            return;
         }
-    }
-
-    // Admin methods
-    async getAllUsers(limit = 100, offset = 0) {
+        
         return new Promise((resolve, reject) => {
-            this.db.all(
-                'SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
-                [limit, offset],
-                (err, rows) => {
+            // Log command usage without personal data
+            this.db.run(
+                'INSERT INTO command_analytics (command_name, server_id) VALUES (?, ?)',
+                [commandName, serverId],
+                function(err) {
                     if (err) {
                         reject(err);
                     } else {
-                        resolve(rows || []);
+                        resolve();
                     }
                 }
             );
         });
     }
 
-    async getUserCount() {
+    async getCommandStats() {
+        // Check if database is ready
+        if (!this.db) {
+            return { totalCommands: 0, commandBreakdown: [] };
+        }
+        
         return new Promise((resolve, reject) => {
-            this.db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(row ? row.count : 0);
+            // Get total command usage
+            this.db.get(
+                'SELECT COUNT(*) as total FROM command_analytics',
+                (err, totalRow) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+
+                    // Get breakdown by command
+                    this.db.all(
+                        'SELECT command_name, COUNT(*) as count FROM command_analytics GROUP BY command_name ORDER BY count DESC',
+                        (err, rows) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve({
+                                    totalCommands: totalRow.total,
+                                    commandBreakdown: rows || []
+                                });
+                            }
+                        }
+                    );
                 }
-            });
+            );
         });
+    }
+
+    // For compatibility with existing code - always return true for free version
+    async hasActiveSubscription() {
+        return true; // Everything is free!
+    }
+
+    async isPremiumUser() {
+        return true; // Everyone is premium in free version!
     }
 
     async close() {
-        return new Promise((resolve) => {
-            if (this.db) {
-                this.db.close((err) => {
-                    if (err) {
-                        console.error('Error closing database:', err);
-                    }
-                    resolve();
-                });
-            } else {
-                resolve();
-            }
-        });
+        if (this.db) {
+            this.db.close();
+        }
     }
 }
 

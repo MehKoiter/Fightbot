@@ -1,7 +1,5 @@
 # 🥊 FightBot - Ultimate FREE UFC Discord Bot
 
-> **UPDATE:** Migration to the new modular architecture is now complete! See the [ARCHITECTURE.md](ARCHITECTURE.md) and [MIGRATION.md](MIGRATION.md) files for details about the new structure.
-
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-14.8.0-blue.svg)](https://discord.js.org/)
 [![License](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
@@ -227,20 +225,9 @@ fightbot-free/
 - **Rate limiting** to prevent abuse
 - **Secure configuration** management
 
-## 🎯 Roadmap
+## 🗺️ Project Roadmap
 
-### Upcoming Features
-- **Live Fight Updates** - Real-time round-by-round scoring (FREE)
-- **Multi-Event Tracking** - Follow multiple promotions (FREE)
-- **Custom Dashboards** - Personalized fight tracking (FREE)
-- **Advanced Integrations** - Third-party service connections (FREE)
-- **Mobile App Support** - Companion mobile application (FREE)
-
-### API Enhancements
-- **Real Sportsbook Integration** - Live API connections (FREE)
-- **Enhanced Fighter Database** - Comprehensive fighter profiles (FREE)
-- **Video Highlights** - Fight clip integration (FREE)
-- **Social Features** - Community predictions and discussions (FREE)
+For detailed project planning, roadmap, and development status, see [ROADMAP.md](ROADMAP.md).
 
 ## 🎉 All Features Are FREE!
 
@@ -273,8 +260,6 @@ fightbot-free/
 - **Suggest Features** - Share your ideas
 
 ## 🛡️ Security & Privacy
-
-> **IMPORTANT SECURITY NOTICE:** Never commit your `.env` file or expose your Discord bot token. If you believe your token has been exposed, immediately regenerate it in the Discord Developer Portal.
 
 - **Data Protection** - Your preferences and data are kept secure
 - **No Personal Information** - We only store Discord user IDs and preferences

@@ -1,7 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import UfcService from "../services/ufcService.js";
-import { eventCache } from "../services/eventCache.js";
-import { VERSION_CONFIG, isFeatureEnabled, isFree } from "../config/version.js";
+import { VERSION_CONFIG } from "../config/version.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -10,17 +9,32 @@ export default {
     
     execute: async (interaction) => {
         try {
-            // Defer the reply since this might take a while
+            // Defer the reply IMMEDIATELY - this must happen within 3 seconds
             await interaction.deferReply();
 
+            // Add a small delay to ensure defer is processed
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Set a timeout for the UFC service call to prevent long waits
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('UFC service timeout')), 10000)
+            );
+
             const ufcService = new UfcService();
-            const event = await ufcService.getUpcomingEvent();
+            const event = await Promise.race([
+                ufcService.getUpcomingEvent(),
+                timeoutPromise
+            ]);
 
             if (!event) {
                 const errorEmbed = new EmbedBuilder()
                     .setColor('#ff0000')
                     .setTitle('❌ No Upcoming Events Found')
                     .setDescription('Sorry, I couldn\'t find any upcoming UFC events at the moment.')
+                    .addFields(
+                        { name: '🔧 Possible Reasons', value: '• UFC.com may be temporarily unavailable\n• No events currently scheduled\n• Network connection issues', inline: false }
+                    )
+                    .setFooter({ text: 'Try again in a few minutes' })
                     .setTimestamp();
 
                 await interaction.editReply({ embeds: [errorEmbed] });
@@ -28,188 +42,140 @@ export default {
             }
 
             // Create the main event embed
-            const mainEmbed = new EmbedBuilder()
-                .setColor('#d20a11') // UFC red color
-                .setTitle(`🥊 ${event.title || 'UFC Event'}`)
-                .setDescription(event.subtitle || 'Upcoming UFC Event')
-                .setURL(event.url || 'https://www.ufc.com/events')
+            const eventEmbed = new EmbedBuilder()
+                .setColor('#ff0000')
+                .setTitle(`🥊 ${event.title}`)
+                .setDescription(`**Next UFC Event**\n${event.subtitle || 'Ultimate Fighting Championship'}`)
+                .addFields(
+                    { name: '📅 Date', value: event.date || 'TBA', inline: true },
+                    { name: '📍 Location', value: event.location || 'TBA', inline: true },
+                    { name: '🕐 Time', value: event.time || 'TBA', inline: true }
+                )
+                .setFooter({ 
+                    text: `Data from UFC.com • FightBot v${VERSION_CONFIG.version} - Free Forever!`,
+                    iconURL: 'https://logoeps.com/wp-content/uploads/2013/03/ufc-vector-logo.png'
+                })
                 .setTimestamp();
 
-            // Add event date if available
-            if (event.date) {
-                mainEmbed.addFields({
-                    name: '📅 Event Date',
-                    value: event.date,
-                    inline: true
-                });
+            // Add event poster/image if available
+            if (event.imageUrl || event.imgUrl) {
+                const imageUrl = event.imageUrl || event.imgUrl;
+                console.log('🖼️ Adding event poster:', imageUrl);
+                eventEmbed.setImage(imageUrl);
+            } else {
+                console.log('⚠️ No event poster found, using UFC logo');
+                // Use a fallback UFC logo/banner if no poster is found
+                eventEmbed.setThumbnail('https://logoeps.com/wp-content/uploads/2013/03/ufc-vector-logo.png');
             }
 
-            // Add event poster if available
-            if (event.imgUrl) {
-                mainEmbed.setImage(event.imgUrl);
-            }
-
-            // Add number of fights
+            // Create fight card embed if fights are available
+            const embeds = [eventEmbed];
+            
             if (event.fights && event.fights.length > 0) {
-                mainEmbed.addFields({
-                    name: '🥊 Total Fights',
-                    value: `${event.fights.length} fights scheduled`,
-                    inline: true
-                });
-            }
-
-            const embeds = [mainEmbed];
-
-            // Create embeds for main card fights (apply version limits)
-            if (event.fights && event.fights.length > 0) {
-                const maxFights = event.fights.length; // No limits, everything is free
-                const mainCardFights = event.fights.slice(0, Math.min(maxFights, 5)); // Discord embed limits
+                // Check if we have valid fight data (not all TBA)
+                const validFights = event.fights.filter(fight => 
+                    fight.redCorner?.name && fight.redCorner.name !== 'TBA' && 
+                    fight.blueCorner?.name && fight.blueCorner.name !== 'TBA'
+                );
                 
-                // Create headliner embed (first fight is usually the main event)
-                const headliner = mainCardFights[0];
-                if (headliner && headliner.redCorner && headliner.blueCorner) {
-                    const headlinerEmbed = new EmbedBuilder()
-                        .setColor('#ffd700') // Gold color for main event
-                        .setTitle('👑 MAIN EVENT')
-                        .setDescription(`**${headliner.weightClass || 'Championship Fight'}**`)
-                        .addFields(
-                            {
-                                name: '🔴 Red Corner',
-                                value: `**${headliner.redCorner.name || 'TBA'}**${headliner.redCorner.rank ? `\n${headliner.redCorner.rank}` : ''}`,
-                                inline: true
-                            },
-                            {
-                                name: '🆚',
-                                value: 'VS',
-                                inline: true
-                            },
-                            {
-                                name: '🔵 Blue Corner',
-                                value: `**${headliner.blueCorner.name || 'TBA'}**${headliner.blueCorner.rank ? `\n${headliner.blueCorner.rank}` : ''}`,
-                                inline: true
-                            }
-                        );
+                if (validFights.length === 0) {
+                    console.log('⚠️ No valid fight data found - all fighters are TBA');
                     
-                    embeds.push(headlinerEmbed);
-                }
+                    const errorEmbed = new EmbedBuilder()
+                        .setColor('#ffaa00')
+                        .setTitle('⚠️ Fight Card Not Available')
+                        .setDescription('The fight card details are not yet available for this event.')
+                        .addFields(
+                            { name: '🔧 This could mean:', value: '• Fight card hasn\'t been announced yet\n• UFC website structure has changed\n• Event details are being updated', inline: false }
+                        )
+                        .setFooter({ text: 'Check back later or visit UFC.com for updates' })
+                        .setTimestamp();
+                    
+                    embeds.push(errorEmbed);
+                } else {
+                    const fightCardEmbed = new EmbedBuilder()
+                        .setColor('#ff9900')
+                        .setTitle('🥊 Fight Card')
+                        .setDescription('**Main Card & Featured Fights**');
 
-                // Create main card embed for remaining fights
-                if (mainCardFights.length > 1) {
-                    const mainCardEmbed = new EmbedBuilder()
-                        .setColor('#0099ff')
-                        .setTitle('📋 Main Card')
-                        .setDescription('Additional main card fights:');
-
-                    // Add remaining fights to the main card embed
-                    mainCardFights.slice(1).forEach((fight, index) => {
-                        if (fight.redCorner && fight.blueCorner) {
-                            const redName = fight.redCorner.name || 'TBA';
-                            const blueName = fight.blueCorner.name || 'TBA';
-                            const redRank = fight.redCorner.rank ? ` (${fight.redCorner.rank})` : '';
-                            const blueRank = fight.blueCorner.rank ? ` (${fight.blueCorner.rank})` : '';
-                            
-                            mainCardEmbed.addFields({
-                                name: `${index + 2}. ${fight.weightClass || 'Fight'}`,
-                                value: `${redName}${redRank} vs ${blueName}${blueRank}`,
-                                inline: false
-                            });
-                        }
+                    // Show valid fights (limit to 12 for better layout)
+                    const displayFights = validFights.slice(0, 12);
+                    
+                    displayFights.forEach((fight, index) => {
+                        const fighter1 = fight.redCorner?.name || 'TBA';
+                        const fighter2 = fight.blueCorner?.name || 'TBA';
+                        const weightClass = fight.weightClass || 'TBA';
+                        
+                        // Format weight class to be shorter
+                        const shortWeightClass = weightClass
+                            .replace('Heavyweight Bout', 'HW')
+                            .replace('Light Heavyweight Bout', 'LHW')
+                            .replace('Middleweight Bout', 'MW')
+                            .replace('Welterweight Bout', 'WW')
+                            .replace('Lightweight Bout', 'LW')
+                            .replace('Featherweight Bout', 'FW')
+                            .replace('Bantamweight Bout', 'BW')
+                            .replace('Flyweight Bout', 'FLW')
+                            .replace('Women\'s', 'W')
+                            .replace('Bout', '')
+                            .trim();
+                        
+                        // Create cleaner formatting with proper line breaks
+                        const fightInfo = `**${fighter1}** vs **${fighter2}**\n${shortWeightClass}`;
+                        
+                        fightCardEmbed.addFields({
+                            name: `${index + 1}.`,
+                            value: fightInfo,
+                            inline: true
+                        });
                     });
 
-                    embeds.push(mainCardEmbed);
+                    embeds.push(fightCardEmbed);
                 }
+            } else {
+                console.log('⚠️ No fights found in event data');
+                
+                const noFightsEmbed = new EmbedBuilder()
+                    .setColor('#ffaa00')
+                    .setTitle('⚠️ Fight Card Not Available')
+                    .setDescription('Fight card information could not be retrieved for this event.')
+                    .addFields(
+                        { name: '🔧 Possible reasons:', value: '• Fight card not yet announced\n• Website parsing issues\n• Event page structure changed', inline: false }
+                    )
+                    .setFooter({ text: 'Visit UFC.com for the latest information' })
+                    .setTimestamp();
+                
+                embeds.push(noFightsEmbed);
             }
 
-            // Add footer with version information
-            embeds[embeds.length - 1].setFooter({
-                text: VERSION_CONFIG.messages.freeVersionFooter,
-                iconURL: 'https://logoeps.com/wp-content/uploads/2013/03/ufc-vector-logo.png'
-            });
-
-            // Add support/donation embed for users
-            const supportEmbed = new EmbedBuilder()
-                .setColor('#00ff00')
-                .setTitle('❤️ Support FightBot Development')
-                .setDescription(VERSION_CONFIG.messages.premiumPromotion)
-                .addFields(
-                    {
-                        name: '🚀 All Features Are FREE!',
-                        value: '• **Detailed Fighter Stats** - Full records, striking accuracy, takedown defense\n' +
-                               '• **Betting Odds Tracking** - Real-time odds from multiple sportsbooks\n' +
-                               '• **Advanced Analytics** - Win probability, performance trends\n' +
-                               '• **Custom Notifications** - Get alerts for your favorite fighters\n' +
-                               '• **Historical Data** - Access past event results and trends\n' +
-                               '• **Export Data** - Download fight cards and stats',
-                        inline: false
-                    },
-                    {
-                        name: '💎 Coming Soon',
-                        value: '• Live fight updates\n• Prediction algorithms\n• Multi-event tracking\n• Enhanced support',
-                        inline: false
-                    }
-                )
-                .setFooter({ text: 'Use /features to see all available features' });
-            
-            embeds.push(supportEmbed);
-
-            // Create interactive buttons for additional information
+            // Create interactive buttons
             const actionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId('fight_prelims')
-                        .setLabel('Prelims')
-                        .setStyle(ButtonStyle.Primary)
-                        .setEmoji('📺'),
-                    new ButtonBuilder()
-                        .setCustomId('fight_records')
-                        .setLabel('Fighter Records')
-                        .setStyle(ButtonStyle.Secondary)
-                        .setEmoji('📊'),
-                    new ButtonBuilder()
-                        .setCustomId('fight_venue')
-                        .setLabel('Venue Info')
-                        .setStyle(ButtonStyle.Secondary)
-                        .setEmoji('🏟️'),
-                    new ButtonBuilder()
-                        .setCustomId('fight_predictions')
-                        .setLabel('Fight Analysis')
-                        .setStyle(ButtonStyle.Success)
-                        .setEmoji('🎯')
-                );
-
-            const secondRow = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('fight_schedule')
-                        .setLabel('Fight Times')
-                        .setStyle(ButtonStyle.Secondary)
-                        .setEmoji('⏰'),
-                    new ButtonBuilder()
                         .setCustomId('fight_refresh')
-                        .setLabel('Refresh Data')
-                        .setStyle(ButtonStyle.Secondary)
-                        .setEmoji('🔄'),
+                        .setLabel('🔄 Refresh')
+                        .setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder()
-                        .setLabel('View on UFC.com')
-                        .setStyle(ButtonStyle.Link)
-                        .setURL(event.url || 'https://www.ufc.com/events')
-                        .setEmoji('🌐')
+                        .setCustomId('fight_prelims')
+                        .setLabel('📋 Prelims')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
+                        .setCustomId('fight_stats')
+                        .setLabel('📊 Stats')
+                        .setStyle(ButtonStyle.Secondary)
                 );
 
-            // Store event data in cache for button interactions
-            const cacheKey = `${interaction.user.id}_${interaction.channelId}`;
-            eventCache.set(cacheKey, event);
-            
-            // Debug logging
-            console.log(`💾 Storing event data in cache with key: ${cacheKey}`);
-            console.log(`📝 Event stored: ${event.title}`);
-            console.log(`🥊 Fights stored: ${event.fights?.length || 0}`);
+            // Add UFC.com link if available
+            if (event.url) {
+                actionRow.addComponents(
+                    new ButtonBuilder()
+                        .setLabel('🔗 UFC.com')
+                        .setStyle(ButtonStyle.Link)
+                        .setURL(event.url)
+                );
+            }
 
-            // Send all embeds with interactive buttons
-            await interaction.editReply({ 
-                embeds: embeds,
-                components: [actionRow, secondRow]
-            });
+            await interaction.editReply({ embeds: embeds, components: [actionRow] });
 
         } catch (error) {
             console.error('❌ Error in fight command:', error);
@@ -217,19 +183,24 @@ export default {
             const errorEmbed = new EmbedBuilder()
                 .setColor('#ff0000')
                 .setTitle('❌ Error')
-                .setDescription('An error occurred while fetching fight information. Please try again later.')
+                .setDescription('Sorry, there was an error fetching the fight information. Please try again in a moment.')
+                .addFields(
+                    { name: '🔧 Troubleshooting', value: '• Check your internet connection\n• Try the command again\n• The UFC website may be temporarily unavailable', inline: false }
+                )
+                .setFooter({ text: 'All features remain free regardless!' })
                 .setTimestamp();
-
-            // Check if we can still edit the reply
+            
             try {
-                await interaction.editReply({ embeds: [errorEmbed] });
-            } catch (editError) {
-                // If edit fails, try to follow up
-                try {
-                    await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
-                } catch (followUpError) {
-                    console.error('❌ Failed to send error message:', followUpError);
+                // Only try to respond if we haven't already responded
+                if (interaction.deferred && !interaction.replied) {
+                    await interaction.editReply({ embeds: [errorEmbed] });
+                } else if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
                 }
+            } catch (replyError) {
+                console.error('❌ Failed to send error message:', replyError);
+                // If we can't send a message, it's likely because the interaction has expired
+                // This is normal for Discord interactions that take too long
             }
         }
     },

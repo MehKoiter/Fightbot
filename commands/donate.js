@@ -7,6 +7,9 @@ export default {
     
     async execute(interaction) {
         try {
+            // Defer reply immediately to prevent timeout
+            await interaction.deferReply({ ephemeral: true });
+            
             const embed = new EmbedBuilder()
                 .setColor(0xff424d)
                 .setTitle('❤️ Support FightBot')
@@ -27,7 +30,7 @@ export default {
                         .setEmoji('❤️')
                 );
 
-            await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+            await interaction.editReply({ embeds: [embed], components: [row] });
 
         } catch (error) {
             console.error('Donate command error:', error);
@@ -38,7 +41,15 @@ export default {
                 .setDescription('Sorry, there was an error displaying the donation information. Please try again later.')
                 .setFooter({ text: 'All features remain free regardless!' });
             
-            await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                } else {
+                    await interaction.editReply({ embeds: [errorEmbed] });
+                }
+            } catch (replyError) {
+                console.error('Failed to send error response:', replyError);
+            }
         }
     },
 };
