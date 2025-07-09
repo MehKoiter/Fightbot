@@ -75,7 +75,6 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
 - `/fight` - Display the upcoming UFC fight card with interactive buttons
 - `/info` - Show bot information, version details, and available features
 - `/help` - Display comprehensive help and command information
-- `/premium` - Learn about FightBot Premium features and pricing
 - `/support` - Get support information and contact details
 
 ## 🎯 How to Use
@@ -107,32 +106,6 @@ The bot is configured for the free version with these settings:
 - **Event Queries**: 1 upcoming event at a time
 - **Cache Duration**: 1 hour for optimal performance
 - **Request Limits**: 50 requests per hour
-
-## 🆚 Free vs Premium Comparison
-
-| Feature | Free Version | Premium Version |
-|---------|--------------|-----------------|
-| Fight Cards | ✅ Main card (5 fights) | ✅ Complete card (unlimited) |
-| Fighter Stats | ✅ Basic records | ✅ Advanced analytics |
-| Event Info | ✅ Venue & timing | ✅ Plus historical data |
-| Interactive Buttons | ✅ All core buttons | ✅ Plus advanced features |
-| Betting Odds | ❌ | ✅ Real-time tracking |
-| Analytics | ❌ | ✅ AI-powered predictions |
-| Notifications | ❌ | ✅ Custom alerts |
-| Data Export | ❌ | ✅ Multiple formats |
-| Support | 📧 Community | 🌟 Priority support |
-
-## 🌟 Upgrade to Premium
-
-Want more features? FightBot Premium includes:
-- **Real-time Betting Odds** - Track odds from major sportsbooks
-- **Advanced Analytics** - AI-powered fight predictions and analysis
-- **Custom Notifications** - Alerts for your favorite fighters
-- **Data Export** - Download fight data in multiple formats
-- **Historical Data** - Access to past events and comprehensive stats
-- **Priority Support** - Faster response times and dedicated assistance
-
-Use `/premium` in Discord to learn more!
 
 ## 📁 Project Structure
 
@@ -175,7 +148,7 @@ npm run dev
 
 ### Community Support
 - **GitHub Issues** - Report bugs and request features
-- **Email** - support@fightbot.com
+- **Email** - jess54191@gmail.com
 - **Documentation** - This README and in-app help commands
 
 ### Getting Help
