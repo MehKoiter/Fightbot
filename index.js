@@ -4,6 +4,7 @@ import { token } from './config.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import http from 'http';
 import NotificationService from './services/notificationService.js';
 import UserDatabaseService from './services/userDatabaseService.js';
 import { VERSION_CONFIG } from './config/version.js';
@@ -183,3 +184,37 @@ async function checkOddsChanges() {
 
 // Start the bot
 initialize();
+
+/**
+ * Create a simple HTTP server for Render port binding
+ * This is required for Render Web Services but doesn't affect Discord bot functionality
+ */
+function createHealthServer() {
+    const server = http.createServer((req, res) => {
+        // Handle health check endpoint
+        if (req.url === '/health' || req.url === '/') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                status: 'healthy',
+                bot: client.user ? client.user.tag : 'Not logged in',
+                uptime: process.uptime(),
+                version: VERSION_CONFIG.version,
+                timestamp: new Date().toISOString()
+            }));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not Found');
+        }
+    });
+
+    const port = process.env.PORT || 3000;
+    server.listen(port, () => {
+        console.log(`🌐 Health server running on port ${port}`);
+        console.log(`📊 Health check available at: http://localhost:${port}/health`);
+    });
+
+    return server;
+}
+
+// Start the health server for Render
+createHealthServer();
