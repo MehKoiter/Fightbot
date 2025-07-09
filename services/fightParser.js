@@ -99,6 +99,99 @@ export class FightParser {
     }
 
     /**
+     * Try multiple selectors to find fighter data
+     * @param {Cheerio.CheerioAPI} cheerioApi Cheerio API instance
+     * @returns {string[]} Array of fighter names
+     */
+    tryFighterSelectors(cheerioApi) {
+        const fighterSelectors = [
+            '.c-listing-fight__corner-name',      // Primary selector
+            '.c-card-event__athlete-name',        // Card event page
+            '.fighter-name',                      // Generic fighter name
+            '[data-testid="fighter-name"]',       // React testid
+            '.athlete-name',                      // Alternative athlete name
+            '.c-listing-fight__corner .c-listing-fight__corner-name', // Nested selector
+            '.bout__fighter-name',                // Bout specific
+            '.fight-card__fighter-name'           // Fight card specific
+        ];
+        
+        for (const selector of fighterSelectors) {
+            const fighters = cheerioApi(selector).map((_, el) => 
+                cheerioApi(el).text().trim().replace(/\n/g, '').replace(/\s+/g, ' ')
+            ).get().filter(name => name && name.length > 0);
+            
+            if (fighters.length > 0) {
+                console.log(`✅ Found ${fighters.length} fighters with selector: ${selector}`);
+                return fighters;
+            }
+        }
+        
+        console.log('❌ No fighters found with any selector');
+        return [];
+    }
+
+    /**
+     * Try multiple selectors to find weight class data
+     * @param {Cheerio.CheerioAPI} cheerioApi Cheerio API instance
+     * @returns {string[]} Array of weight classes
+     */
+    tryWeightClassSelectors(cheerioApi) {
+        const weightSelectors = [
+            'div.c-listing-fight__details > div.c-listing-fight__class', // Primary selector
+            '.c-listing-fight__class',            // Simplified primary
+            '.weight-class',                      // Generic weight class
+            '.bout-class',                        // Bout class
+            '[data-testid="weight-class"]',       // React testid
+            '.c-listing-fight__class-text',       // Class text variant
+            '.fight-weight-class',                // Fight specific
+            '.bout__weight-class'                 // Bout specific
+        ];
+        
+        for (const selector of weightSelectors) {
+            const weights = cheerioApi(selector).map((_, el) => 
+                cheerioApi(el).text().trim().replace(/\n/g, '').replace(/\s+/g, ' ')
+            ).get().filter(weight => weight && weight.length > 0);
+            
+            if (weights.length > 0) {
+                console.log(`✅ Found ${weights.length} weight classes with selector: ${selector}`);
+                return weights;
+            }
+        }
+        
+        console.log('❌ No weight classes found with any selector');
+        return [];
+    }
+
+    /**
+     * Try multiple selectors to find rank data
+     * @param {Cheerio.CheerioAPI} cheerioApi Cheerio API instance
+     * @returns {string[]} Array of fighter ranks
+     */
+    tryRankSelectors(cheerioApi) {
+        const rankSelectors = [
+            '.c-listing-fight__corner-rank',      // Primary selector
+            '.fighter-rank',                      // Generic rank
+            '.c-listing-fight__rank',             // Alternative rank
+            '[data-testid="fighter-rank"]',       // React testid
+            '.bout__fighter-rank',                // Bout specific
+            '.ranking'                            // Simple ranking
+        ];
+        
+        for (const selector of rankSelectors) {
+            const ranks = cheerioApi(selector).map((_, el) => 
+                cheerioApi(el).text().trim().replace(/\n/g, '')
+            ).get();
+            
+            if (ranks.length > 0) {
+                console.log(`✅ Found ${ranks.length} ranks with selector: ${selector}`);
+                return ranks;
+            }
+        }
+        
+        console.log('ℹ️ No ranks found with any selector (this is normal for some events)');
+        return [];
+    }
+    /**
      * Parse a single event page for detailed fight information
      * @param {string} html HTML content from event page
      * @returns {Event} Parsed event with fights
@@ -108,84 +201,40 @@ export class FightParser {
         
         console.log('🔍 Parsing event page...');
 
-        // Get fighter data from the parsedHTML
-        console.log('🥊 Looking for fighters with selector:', fighterClass);
-        const fighters = parsedHTML(fighterClass).map((_, el) => 
-            parsedHTML(el).text().trim().replace(/\n/g, '')
-        ).get();
-        console.log('🥊 Found fighters:', fighters.length, fighters);
-
-        // Get rank data from the parsedHTML
-        console.log('🏆 Looking for ranks with selector:', rankClass);
-        const ranks = parsedHTML(rankClass).map((_, el) => 
-            parsedHTML(el).text().trim().replace(/\n/g, '')
-        ).get();
-        console.log('🏆 Found ranks:', ranks.length, ranks);
-
-        // Get weightClasses data from the parsedHTML
-        console.log('⚖️ Looking for weight classes with selector:', weightClass);
-        const weightClasses = parsedHTML(weightClass).map((_, el) => 
-            parsedHTML(el).text().trim().replace(/\n/g, '').replace(/ +/g, ' ')
-        ).get();
-        console.log('⚖️ Found weight classes:', weightClasses.length, weightClasses);
+        // Use robust selector methods for better parsing
+        const fighters = this.tryFighterSelectors(parsedHTML);
+        const ranks = this.tryRankSelectors(parsedHTML);
+        const weightClasses = this.tryWeightClassSelectors(parsedHTML);
         
         // If we found no fighters or weight classes, this indicates parsing failure
         if (fighters.length === 0 && weightClasses.length === 0) {
-            console.log('❌ No fighters or weight classes found - parsing failed');
-            
-            // Try alternative selectors
-            console.log('🔍 Trying alternative selectors...');
-            const altFighterSelectors = [
-                '.c-listing-fight__corner-name',
-                '.c-card-event__athlete-name',
-                '.fighter-name', 
-                '[data-testid="fighter-name"]',
-                '.athlete-name'
-            ];
-            
-            const altWeightSelectors = [
-                '.c-listing-fight__class',
-                '.weight-class',
-                '.bout-class',
-                '[data-testid="weight-class"]'
-            ];
-            
-            for (const selector of altFighterSelectors) {
-                const altFighters = parsedHTML(selector).map((_, el) => 
-                    parsedHTML(el).text().trim()
-                ).get();
-                if (altFighters.length > 0) {
-                    console.log(`✅ Found fighters with alternative selector ${selector}:`, altFighters);
-                    break;
-                }
-            }
-            
-            for (const selector of altWeightSelectors) {
-                const altWeights = parsedHTML(selector).map((_, el) => 
-                    parsedHTML(el).text().trim()
-                ).get();
-                if (altWeights.length > 0) {
-                    console.log(`✅ Found weight classes with alternative selector ${selector}:`, altWeights);
-                    break;
-                }
-            }
-            
+            console.log('❌ No fighters or weight classes found - parsing failed completely');
             return null; // Return null to indicate parsing failure
         }
         
         const fights = [];
         
-        // Create fight objects
+        // Create fight objects with better data validation
         for (let i = 0; i < weightClasses.length && i * 2 + 1 < fighters.length; i++) {
-            const fight = new Fight(
-                new FightCorner(fighters[i * 2] || '', ranks[i * 2] || ''),
-                new FightCorner(fighters[i * 2 + 1] || '', ranks[i * 2 + 1] || ''),
-                weightClasses[i] || ''
-            );
-            fights.push(fight);
+            const redFighter = fighters[i * 2] || '';
+            const blueFighter = fighters[i * 2 + 1] || '';
+            const weight = weightClasses[i] || '';
+            
+            // Only create fight if we have valid fighter names
+            if (redFighter && blueFighter && 
+                redFighter !== 'TBA' && blueFighter !== 'TBA' &&
+                redFighter !== 'TBD' && blueFighter !== 'TBD') {
+                
+                const fight = new Fight(
+                    new FightCorner(redFighter, ranks[i * 2] || ''),
+                    new FightCorner(blueFighter, ranks[i * 2 + 1] || ''),
+                    weight
+                );
+                fights.push(fight);
+            }
         }
         
-        console.log(`✅ Created ${fights.length} fight objects`);
+        console.log(`✅ Created ${fights.length} valid fight objects`);
 
         // Get title data from the parsedHTML
         const title = parsedHTML(titleClass).text().trim().replace(/\n/g, '');
@@ -226,73 +275,12 @@ export class FightParser {
             }
         }
 
-        // Get location data from the parsedHTML
-        console.log('📍 Looking for location with selector:', locationClass);
-        let location = parsedHTML(locationClass).text().trim();
-        
-        // Try alternative location selectors if primary fails
-        if (!location) {
-            const altLocationSelectors = [
-                '.c-hero__venue-name',
-                '.c-hero__venue-city',
-                '.c-hero__venue-location',
-                '.c-hero__location',
-                '.event-venue',
-                '.venue-name',
-                '.location',
-                '[data-venue]',
-                '.c-event-details__venue',
-                '.c-hero__meta .location',
-                '.c-hero__subtitle', // Sometimes location is in subtitle
-                '.c-hero__sub-headline' // Alternative subtitle selector
-            ];
-            
-            for (const selector of altLocationSelectors) {
-                const rawLocation = parsedHTML(selector).text().trim();
-                // Don't use location if it contains date/time patterns
-                if (rawLocation && 
-                    !rawLocation.match(/\d{1,2}:\d{2}/) && // No time
-                    !rawLocation.match(/(mon|tue|wed|thu|fri|sat|sun)/i) && // No day names
-                    !rawLocation.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i) && // No month names
-                    !rawLocation.match(/\d{1,2}\/\d{1,2}/) && // No date format
-                    rawLocation.length < 50 // Reasonable location length
-                ) {
-                    location = rawLocation;
-                    console.log(`📍 Found location with alternative selector ${selector}:`, location);
-                    break;
-                }
-            }
-        }
+        // Get location data with enhanced selector fallbacks
+        let location = this.tryLocationSelectors(parsedHTML);
         console.log('📍 Final location:', location || 'Not found');
 
-        // Get time data from the parsedHTML
-        console.log('🕐 Looking for time with selector:', timeClass);
-        let time = parsedHTML(timeClass).text().trim();
-        
-        // Try alternative time selectors if primary fails
-        if (!time) {
-            const altTimeSelectors = [
-                '.c-hero__time-text',
-                '.c-hero__time-start',
-                '.c-hero__start-time', 
-                '.event-time',
-                '.start-time',
-                '.time',
-                '[data-time]',
-                '.c-event-details__time',
-                '.c-hero__headline-suffix .time',
-                '.c-hero__meta .time',
-                '.c-hero__meta-item'
-            ];
-            
-            for (const selector of altTimeSelectors) {
-                time = parsedHTML(selector).text().trim();
-                if (time) {
-                    console.log(`🕐 Found time with alternative selector ${selector}:`, time);
-                    break;
-                }
-            }
-        }
+        // Get time data with enhanced selector fallbacks
+        let time = this.tryTimeSelectors(parsedHTML);
         console.log('🕐 Final time:', time || 'Not found');
         
         // Use extracted values as fallback
@@ -310,6 +298,79 @@ export class FightParser {
         const imgUrl = this.parseImage(parsedHTML);
 
         return new Event(title, subtitle, date, imgUrl, fights, location, time);
+    }
+
+    /**
+     * Try multiple selectors to find location data
+     * @param {Cheerio.CheerioAPI} cheerioApi Cheerio API instance
+     * @returns {string} Location string or empty string
+     */
+    tryLocationSelectors(cheerioApi) {
+        const locationSelectors = [
+            '.c-hero__venue',                     // Primary selector
+            '.c-hero__venue-name',
+            '.c-hero__venue-city',
+            '.c-hero__venue-location',
+            '.c-hero__location',
+            '.event-venue',
+            '.venue-name',
+            '.location',
+            '[data-venue]',
+            '.c-event-details__venue',
+            '.c-hero__meta .location',
+            '.c-hero__subtitle',
+            '.c-hero__sub-headline'
+        ];
+        
+        for (const selector of locationSelectors) {
+            const rawLocation = cheerioApi(selector).text().trim();
+            
+            // Don't use location if it contains date/time patterns
+            if (rawLocation && 
+                !rawLocation.match(/\d{1,2}:\d{2}/) && // No time
+                !rawLocation.match(/(mon|tue|wed|thu|fri|sat|sun)/i) && // No day names
+                !rawLocation.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i) && // No month names
+                !rawLocation.match(/\d{1,2}\/\d{1,2}/) && // No date format
+                rawLocation.length < 100 // Reasonable location length
+            ) {
+                console.log(`📍 Found location with selector ${selector}:`, rawLocation);
+                return rawLocation;
+            }
+        }
+        
+        return '';
+    }
+
+    /**
+     * Try multiple selectors to find time data
+     * @param {Cheerio.CheerioAPI} cheerioApi Cheerio API instance
+     * @returns {string} Time string or empty string
+     */
+    tryTimeSelectors(cheerioApi) {
+        const timeSelectors = [
+            '.c-hero__time',                      // Primary selector
+            '.c-hero__time-text',
+            '.c-hero__time-start',
+            '.c-hero__start-time', 
+            '.event-time',
+            '.start-time',
+            '.time',
+            '[data-time]',
+            '.c-event-details__time',
+            '.c-hero__headline-suffix .time',
+            '.c-hero__meta .time',
+            '.c-hero__meta-item'
+        ];
+        
+        for (const selector of timeSelectors) {
+            const time = cheerioApi(selector).text().trim();
+            if (time && time.match(/\d{1,2}:\d{2}/)) { // Basic time pattern validation
+                console.log(`� Found time with selector ${selector}:`, time);
+                return time;
+            }
+        }
+        
+        return '';
     }
 
     /**
