@@ -450,6 +450,32 @@ We welcome contributions to FightBot Free!
 
 For detailed project planning, roadmap, and development status, see [ROADMAP.md](ROADMAP.md).
 
+## 👩‍💻 Developer Documentation
+
+### 📚 **Documentation Workflow**
+Before making any changes, please review our [Documentation Workflow Guide](DOCUMENTATION-WORKFLOW.md):
+- **Documentation-First Approach**: Update docs before pushing changes
+- **Pre-Push Checklist**: Ensure all documentation is current
+- **Quality Standards**: Maintain consistent, accurate documentation
+
+### 📁 **Documentation Files**
+- **[README.md](README.md)** - Main project documentation
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment and hosting guide
+- **[COMMAND-DEPLOYMENT.md](COMMAND-DEPLOYMENT.md)** - Command management guide
+- **[PHASE7.md](PHASE7.md)** - Advanced fighter features documentation
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+- **[DOCUMENTATION-WORKFLOW.md](DOCUMENTATION-WORKFLOW.md)** - Documentation standards
+
+### 🔧 **Development Workflow**
+1. Create feature/fix branch
+2. **Update documentation first**
+3. Implement changes
+4. Test thoroughly
+5. Review documentation accuracy
+6. Merge and deploy
+
+**Remember**: Good documentation prevents future issues and helps users succeed! 📚
+
 ---
 
 **FightBot Free** - Bringing the excitement of UFC directly to your Discord server! 🥊
