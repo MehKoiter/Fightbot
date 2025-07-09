@@ -18,6 +18,7 @@
     "test:production": "node production-test.js",
     "test:phase7": "node test-phase7.js",
     "test:comprehensive": "node test-comprehensive.js",
+    "test:fighter-timing": "node test-fighter-timing.js",
     "test:ufc": "node -e \"import('./services/ufcService.js').then(m => new m.default().getUpcomingEvent().then(console.log))\"",
     "setup": "node setup.js",
     "setup:init": "node setup.js init-db",

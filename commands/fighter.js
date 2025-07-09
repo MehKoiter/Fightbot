@@ -60,16 +60,46 @@ export default {
      * Execute the fighter command
      */
     async execute(interaction) {
+        const fighterName = interaction.options.getString('name');
+        const compareFighter = interaction.options.getString('compare');
+        
         try {
-            // Defer the reply immediately
-            await interaction.deferReply();
-
-            const fighterName = interaction.options.getString('name');
-            const compareFighter = interaction.options.getString('compare');
             const fighterService = new FighterService();
+            
+            // For faster response, try without defer first for simple cases
+            let hasDeferred = false;
+            
+            // Helper function to safely defer if not already done
+            const safeDeferReply = async () => {
+                if (!hasDeferred && !interaction.replied && !interaction.deferred) {
+                    try {
+                        await interaction.deferReply();
+                        hasDeferred = true;
+                    } catch (error) {
+                        console.error('Failed to defer reply:', error);
+                        throw error;
+                    }
+                }
+            };
+            
+            // Helper function to safely respond
+            const safeResponse = async (responseData) => {
+                try {
+                    if (hasDeferred || interaction.deferred) {
+                        await interaction.editReply(responseData);
+                    } else {
+                        await interaction.reply(responseData);
+                    }
+                } catch (error) {
+                    console.error('Failed to send response:', error);
+                    throw error;
+                }
+            };
 
-            // If comparison requested
+            // If comparison requested - this might take longer, so defer immediately
             if (compareFighter) {
+                await safeDeferReply();
+                
                 const comparison = await fighterService.compareFighters(fighterName, compareFighter);
                 
                 if (!comparison) {
@@ -82,7 +112,7 @@ export default {
                         )
                         .setTimestamp();
 
-                    await interaction.editReply({ embeds: [errorEmbed] });
+                    await safeResponse({ embeds: [errorEmbed] });
                     return;
                 }
 
@@ -90,15 +120,26 @@ export default {
                 const comparisonEmbed = await this.createComparisonEmbed(comparison);
                 const comparisonButtons = this.createComparisonButtons(fighterName, compareFighter);
 
-                await interaction.editReply({ 
+                await safeResponse({ 
                     embeds: [comparisonEmbed], 
                     components: [comparisonButtons] 
                 });
                 return;
             }
 
-            // Single fighter profile
-            const fighter = await fighterService.getFighterProfile(fighterName);
+            // Single fighter profile - try fast response first
+            let fighter;
+            try {
+                // Quick attempt without defer (for cached data)
+                fighter = await Promise.race([
+                    fighterService.getFighterProfile(fighterName),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2500))
+                ]);
+            } catch (timeoutError) {
+                // If it takes too long, defer and try again
+                await safeDeferReply();
+                fighter = await fighterService.getFighterProfile(fighterName);
+            }
 
             if (!fighter) {
                 const errorEmbed = new EmbedBuilder()
@@ -110,7 +151,7 @@ export default {
                     )
                     .setTimestamp();
 
-                await interaction.editReply({ embeds: [errorEmbed] });
+                await safeResponse({ embeds: [errorEmbed] });
                 return;
             }
 
@@ -118,7 +159,7 @@ export default {
             const profileEmbed = await this.createFighterEmbed(fighter);
             const actionButtons = this.createActionButtons(fighterName);
 
-            await interaction.editReply({ 
+            await safeResponse({ 
                 embeds: [profileEmbed], 
                 components: [actionButtons] 
             });
@@ -135,10 +176,16 @@ export default {
                 )
                 .setTimestamp();
 
-            if (interaction.deferred) {
-                await interaction.editReply({ embeds: [errorEmbed] });
-            } else {
-                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            // Enhanced error handling to prevent "interaction already acknowledged" errors
+            try {
+                if (interaction.deferred) {
+                    await interaction.editReply({ embeds: [errorEmbed] });
+                } else if (!interaction.replied) {
+                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                }
+            } catch (replyError) {
+                console.error('❌ Error executing fighter: Interaction has already been acknowledged.');
+                console.error('Failed to send error response:', replyError.message);
             }
         }
     },
