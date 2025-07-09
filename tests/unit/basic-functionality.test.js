@@ -4,15 +4,13 @@
  */
 
 import UfcService from '../../services/ufcService.js';
-import BettingOddsService from '../../services/bettingOddsService.js';
-import UserPreferencesService from '../../services/userPreferencesService.js';
+import UserDatabaseService from '../../services/userDatabaseService.js';
 import { VERSION_CONFIG, isFeatureEnabled, isPremium } from '../../config/version.js';
 
 class FightBotTester {
     constructor() {
         this.ufcService = new UfcService();
-        this.bettingService = new BettingOddsService();
-        this.userPrefs = new UserPreferencesService();
+        this.userDbService = new UserDatabaseService();
         this.testResults = [];
     }
 
