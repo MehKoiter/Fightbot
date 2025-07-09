@@ -3,10 +3,10 @@
  * Tests all features (everything is FREE now!)
  */
 
-import UfcService from './services/ufcService.js';
-import BettingOddsService from './services/bettingOddsService.js';
-import UserPreferencesService from './services/userPreferencesService.js';
-import { VERSION_CONFIG, isFeatureEnabled, isPremium } from './config/version.js';
+import UfcService from '../../services/ufcService.js';
+import BettingOddsService from '../../services/bettingOddsService.js';
+import UserPreferencesService from '../../services/userPreferencesService.js';
+import { VERSION_CONFIG, isFeatureEnabled, isPremium } from '../../config/version.js';
 
 class FightBotTester {
     constructor() {

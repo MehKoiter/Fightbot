@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { eventCache } from './services/eventCache.js';
-import { FightParser, Event, Fight, FightCorner } from './services/fightParser.js';
+import { eventCache } from '../../services/eventCache.js';
+import { FightParser, Event, Fight, FightCorner } from '../../services/fightParser.js';
 
 // Test Colors for Console Output
 const colors = {

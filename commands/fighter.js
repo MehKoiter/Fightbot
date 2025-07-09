@@ -28,31 +28,71 @@ export default {
      */
     async autocomplete(interaction) {
         try {
-            const focusedValue = interaction.options.getFocused();
-            
-            // Mock fighter suggestions - in production this would search a database
-            const fighters = [
-                'Jon Jones', 'Islam Makhachev', 'Alexander Volkanovski',
-                'Leon Edwards', 'Aljamain Sterling', 'Charles Oliveira',
-                'Kamaru Usman', 'Israel Adesanya', 'Robert Whittaker',
-                'Colby Covington', 'Max Holloway', 'Jose Aldo',
-                'Francis Ngannou', 'Ciryl Gane', 'Tom Aspinall',
-                'Sean O\'Malley', 'Petr Yan', 'Cory Sandhagen'
-            ];
+            // Check interaction state immediately
+            if (interaction.responded) {
+                console.log('⚠️ Autocomplete interaction already responded to');
+                return;
+            }
 
-            const filtered = fighters
-                .filter(fighter => fighter.toLowerCase().includes(focusedValue.toLowerCase()))
-                .slice(0, 25); // Discord autocomplete limit
-
-            await interaction.respond(
-                filtered.map(fighter => ({
-                    name: fighter,
-                    value: fighter
-                }))
+            // Quick timeout protection for autocomplete (Discord has 3 second limit)
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Autocomplete timeout')), 2000)
             );
+            
+            const autocompletePromise = (async () => {
+                const focusedValue = interaction.options.getFocused();
+                
+                // Return empty if no input
+                if (!focusedValue || focusedValue.length === 0) {
+                    return [];
+                }
+                
+                // Mock fighter suggestions - in production this would search a database
+                const fighters = [
+                    'Jon Jones', 'Islam Makhachev', 'Alexander Volkanovski',
+                    'Leon Edwards', 'Aljamain Sterling', 'Charles Oliveira',
+                    'Kamaru Usman', 'Israel Adesanya', 'Robert Whittaker',
+                    'Colby Covington', 'Max Holloway', 'Jose Aldo',
+                    'Francis Ngannou', 'Ciryl Gane', 'Tom Aspinall',
+                    'Sean O\'Malley', 'Petr Yan', 'Cory Sandhagen'
+                ];
+
+                const filtered = fighters
+                    .filter(fighter => 
+                        fighter.toLowerCase().includes(focusedValue.toLowerCase())
+                    )
+                    .slice(0, 25) // Discord autocomplete limit
+                    .map(fighter => ({
+                        name: fighter,
+                        value: fighter
+                    }));
+
+                return filtered;
+            })();
+
+            // Race against timeout
+            const suggestions = await Promise.race([autocompletePromise, timeoutPromise]);
+            
+            // Final check before responding
+            if (!interaction.responded) {
+                await interaction.respond(suggestions);
+            } else {
+                console.log('⚠️ Interaction became responded during processing');
+            }
+            
         } catch (error) {
             console.error('Fighter autocomplete error:', error);
-            await interaction.respond([]);
+            
+            // Only try to respond if we haven't already and the error isn't about acknowledgment
+            if (!interaction.responded && !error.message.includes('already been acknowledged')) {
+                try {
+                    await interaction.respond([]);
+                } catch (responseError) {
+                    console.error('❌ Error handling autocomplete for fighter:', responseError.message);
+                }
+            } else {
+                console.error('❌ Error handling autocomplete for fighter:', error.message);
+            }
         }
     },
 
@@ -73,10 +113,22 @@ export default {
             const safeDeferReply = async () => {
                 if (!hasDeferred && !interaction.replied && !interaction.deferred) {
                     try {
-                        await interaction.deferReply();
-                        hasDeferred = true;
+                        // Add a small delay to avoid conflicts with autocomplete
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        // Double-check interaction state after delay
+                        if (!interaction.replied && !interaction.deferred) {
+                            await interaction.deferReply();
+                            hasDeferred = true;
+                        }
                     } catch (error) {
                         console.error('Failed to defer reply:', error);
+                        
+                        // Check if the error is due to interaction already being handled
+                        if (error.code === 40060 || error.code === 10062) {
+                            console.log('Interaction was already handled - continuing without defer');
+                            return; // Don't throw, just continue
+                        }
                         throw error;
                     }
                 }

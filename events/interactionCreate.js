@@ -85,10 +85,26 @@ export default {
 				}
 
 				if (command.autocomplete) {
+					// Set up timeout protection for autocomplete
+					const autocompleteTimeout = setTimeout(() => {
+						console.warn(`⚠️ Autocomplete for ${interaction.commandName} is taking too long...`);
+					}, 1500); // Autocomplete should be faster than commands
+					
 					await command.autocomplete(interaction);
+					clearTimeout(autocompleteTimeout);
 				}
 			} catch (error) {
 				console.error(`❌ Error handling autocomplete for ${interaction.commandName}:`, error.message);
+				
+				// Try to send empty response if we haven't responded yet
+				try {
+					if (!interaction.responded) {
+						await interaction.respond([]);
+					}
+				} catch (responseError) {
+					// Autocomplete failures are not critical - just log them
+					console.error('Failed to send empty autocomplete response:', responseError.message);
+				}
 			}
 		}
 

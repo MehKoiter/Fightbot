@@ -1,4 +1,4 @@
-import { VERSION_CONFIG } from './config/version.js';
+import { VERSION_CONFIG } from '../../config/version.js';
 
 console.log('🧪 Simple test of FightBot Premium');
 console.log(`Version: ${VERSION_CONFIG.version}`);

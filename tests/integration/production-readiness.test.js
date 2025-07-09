@@ -5,8 +5,8 @@
  * Quick validation of all Phase 6 improvements before production deployment
  */
 
-import { eventCache } from './services/eventCache.js';
-import { FightParser, Event, Fight, FightCorner } from './services/fightParser.js';
+import { eventCache } from '../../services/eventCache.js';
+import { FightParser, Event, Fight, FightCorner } from '../../services/fightParser.js';
 
 const colors = {
     reset: '\x1b[0m', red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m',

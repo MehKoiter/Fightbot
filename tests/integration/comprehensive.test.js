@@ -3,10 +3,10 @@
  * Tests both existing functionality and new Phase 7 features
  */
 
-import UfcService from './services/ufcService.js';
-import FighterService from './services/fighterService.js';
-import FighterInteractionHandler from './services/fighterInteractionHandler.js';
-import { VERSION_CONFIG } from './config/version.js';
+import UfcService from '../../services/ufcService.js';
+import FighterService from '../../services/fighterService.js';
+import FighterInteractionHandler from '../../services/fighterInteractionHandler.js';
+import { VERSION_CONFIG } from '../../config/version.js';
 
 console.log('🧪 Comprehensive FightBot Test Suite');
 console.log('=====================================');
@@ -180,9 +180,9 @@ async function runComprehensiveTests() {
     console.log('\n📋 Test 9: Command Structure');
     try {
         // Test that we can import all command files
-        const fightCommand = await import('./commands/fight.js');
-        const fighterCommand = await import('./commands/fighter.js');
-        const infoCommand = await import('./commands/info.js');
+        const fightCommand = await import('../../commands/fight.js');
+        const fighterCommand = await import('../../commands/fighter.js');
+        const infoCommand = await import('../../commands/info.js');
         
         if (fightCommand.default && fighterCommand.default && infoCommand.default) {
             console.log('✅ All commands load correctly');
@@ -201,7 +201,7 @@ async function runComprehensiveTests() {
     testsTotal++;
     console.log('\n📋 Test 10: Event Handler Integration');
     try {
-        const interactionHandler = await import('./events/interactionCreate.js');
+        const interactionHandler = await import('../../events/interactionCreate.js');
         
         if (interactionHandler.default && interactionHandler.default.name && interactionHandler.default.execute) {
             console.log('✅ Event handler integration working');

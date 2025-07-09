@@ -1,4 +1,4 @@
-import { eventCache } from './services/eventCache.js';
+import { eventCache } from '../../services/eventCache.js';
 
 // Test the cache functionality
 console.log('🧪 Testing event cache...');

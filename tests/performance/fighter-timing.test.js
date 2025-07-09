@@ -2,7 +2,7 @@
  * Test script for fighter command interaction timing fix
  */
 
-import FighterService from './services/fighterService.js';
+import FighterService from '../../services/fighterService.js';
 
 console.log('🧪 Testing Fighter Command Timing Fix');
 console.log('=====================================');

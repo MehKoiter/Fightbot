@@ -3,8 +3,8 @@
  * Tests the new fighter command and related functionality
  */
 
-import FighterService from './services/fighterService.js';
-import FighterInteractionHandler from './services/fighterInteractionHandler.js';
+import FighterService from '../../services/fighterService.js';
+import FighterInteractionHandler from '../../services/fighterInteractionHandler.js';
 
 console.log('🧪 Phase 7 Test Suite - Advanced Fighter Features');
 console.log('=================================================');
