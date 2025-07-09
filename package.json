@@ -1,6 +1,6 @@
 {
   "name": "fightbot-free",
-  "version": "1.7.0-free",
+  "version": "1.7.1-free",
   "description": "FightBot Free - Ultimate UFC Discord Bot with Advanced Fighter Features (All Features FREE!)",
   "main": "index.js",
   "type":"module",

@@ -1,5 +1,18 @@
 # 🔧 Command Deployment Guide
 
+## 🚨 Latest Fixes (v1.7.1-free)
+
+### Fixed Issues:
+- ✅ **Duplicate Commands**: Resolved duplicate command registrations
+- ✅ **Interaction Errors**: Fixed DiscordAPIError[10062] in fighter command
+- ✅ **Command Detection**: Added diagnostic tools to prevent issues
+- ✅ **Deployment Process**: Streamlined command management
+
+### New Tools Available:
+- `npm run deploy:diagnose` - Check current command registrations
+- `npm run deploy:cleanup` - Remove all command registrations
+- `npm run test:fighter-timing` - Test interaction timing fixes
+
 ## Quick Fix for Duplicate Commands
 
 If you see duplicate commands in Discord, run this cleanup:

@@ -3,7 +3,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-14.8.0-blue.svg)](https://discord.js.org/)
 [![License](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.7.0--free-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-1.7.1--free-blue.svg)](package.json)
 
 ![FightBot Logo](img/mmaGloveSmall.png)
 
@@ -43,20 +43,24 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
 - **🔮 Fight Prediction** - AI-powered matchup analysis and predictions
 - **🥊 Fighting Styles** - Detailed fighting style breakdown and analysis
 
-## 🆕 Recent Updates (v1.7.0-free)
+## 🆕 Recent Updates (v1.7.1-free)
 
-### ✅ **Production Fixes & Improvements**
-- **Fixed Discord API Error**: Resolved DiscordAPIError[10062] "Unknown interaction" in `/info` command
-- **Improved Error Handling**: Enhanced error handling across all commands for better reliability
-- **Comprehensive Test Suite**: Added extensive testing framework with 100% pass rate
-- **Production Optimizations**: Streamlined interaction handling for better performance
-- **Documentation Updates**: Updated all documentation to reflect latest features and fixes
+### ✅ **Latest Fixes & Improvements**
+- **Fighter Command Fixed**: Resolved DiscordAPIError[10062] "Unknown interaction" in `/fighter` command
+- **Duplicate Commands Resolved**: Fixed duplicate command registrations in Discord
+- **Hybrid Timing System**: Smart response handling - fast for cached data, deferred for slow operations
+- **Command Management Tools**: Added diagnostic and cleanup tools for deployment issues
+- **Interaction Reliability**: Enhanced error handling to prevent token expiration issues
 
-### 🧪 **Testing & Quality Assurance**
+### 🧪 **Enhanced Testing & Diagnostics**
 - **New Test Scripts**: 
   - `npm run test:phase7` - Test Phase 7 advanced fighter features
   - `npm run test:comprehensive` - Full system test suite
   - `npm run test:production` - Production readiness tests
+  - `npm run test:fighter-timing` - Fighter command timing validation (NEW!)
+- **Command Diagnostics**: 
+  - `npm run deploy:diagnose` - Check for duplicate registrations (NEW!)
+  - `npm run deploy:cleanup` - Clean all command registrations (NEW!)
 - **100% Test Coverage**: All features tested and validated
 - **Continuous Integration**: Automated testing on every deployment
 
@@ -65,6 +69,7 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
 - **Improved Logging**: Comprehensive logging for production monitoring
 - **Health Check Endpoint**: Built-in health monitoring for deployment platforms
 - **Auto-deployment**: Seamless integration with Render.com and other platforms
+- **Command Deployment Guide**: Comprehensive documentation for preventing duplicate commands
 
 ## 🚀 Quick Start
 
@@ -184,7 +189,18 @@ npm run test:comprehensive
 npm run test:production
 ```
 
-Run these tests to ensure all features work correctly, including the new Advanced Fighter Features and recent fixes.
+#### Test Fighter Command Timing (NEW!)
+```bash
+npm run test:fighter-timing
+```
+
+#### Deployment Diagnostics (NEW!)
+```bash
+npm run deploy:diagnose    # Check for duplicate command registrations
+npm run deploy:cleanup     # Clean all command registrations
+```
+
+Run these tests to ensure all features work correctly, including the new Advanced Fighter Features and recent interaction timing fixes.
 
 ## 🚀 Production Deployment
 
@@ -442,12 +458,12 @@ For detailed project planning, roadmap, and development status, see [ROADMAP.md]
 
 ## 📊 Stats & Info
 
-- **Latest Version**: 1.7.0-free
+- **Latest Version**: 1.7.1-free
 - **Release Date**: July 2025
 - **Discord Servers**: Growing daily
-- **Commands Available**: 3 core commands + Phase 7 advanced features
+- **Commands Available**: 4 core commands + Phase 7 advanced features
 - **Interactive Buttons**: 12+ different actions including fighter analytics
 - **Data Sources**: Official UFC feeds and advanced fighter databases
-- **Recent Updates**: Discord API error fixes, comprehensive test suite, and production optimizations
+- **Recent Updates**: Fixed interaction errors, added command diagnostics, and enhanced reliability
 
 Start using FightBot Free today and never miss another UFC event! 🚀

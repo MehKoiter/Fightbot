@@ -6,7 +6,7 @@
 
 export const VERSION_CONFIG = {
     // Current version info
-    version: "1.7.0-free",
+    version: "1.7.1-free",
     type: "FREE", // All features are now FREE
     
     // Feature flags - ALL ENABLED FOR FREE

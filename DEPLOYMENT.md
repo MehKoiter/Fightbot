@@ -311,6 +311,72 @@ Application crashed due to memory limit
    /info   # Should return bot information
    ```
 
+## 🔧 **Latest Troubleshooting (v1.7.1-free)**
+
+### Duplicate Commands in Discord
+**Problem**: Seeing duplicate `/fight`, `/info`, `/fighter`, `/donate` commands
+
+**Solution**:
+```bash
+# 1. Diagnose the issue
+npm run deploy:diagnose
+
+# 2. Clean all commands
+npm run deploy:cleanup
+
+# 3. Re-deploy properly
+npm run deploy              # For guild deployment
+# OR
+npm run deploy:global       # For global deployment (choose ONE)
+```
+
+**Prevention**: Never deploy commands both globally AND to a guild.
+
+### DiscordAPIError[10062]: Unknown interaction
+**Problem**: Commands failing with "Unknown interaction" error
+
+**Fixed in v1.7.1**: 
+- ✅ Hybrid timing system prevents token expiration
+- ✅ Smart defer logic only when needed
+- ✅ Enhanced error recovery
+
+**If still experiencing**:
+```bash
+# Test timing
+npm run test:fighter-timing
+
+# Check for conflicts
+npm run deploy:diagnose
+```
+
+### Fighter Command Timeout Issues
+**Problem**: `/fighter` command taking too long or failing
+
+**Fixed in v1.7.1**:
+- ✅ Fast responses for cached data (< 2.5s)
+- ✅ Automatic defer for slow operations (> 2.5s)
+- ✅ Better error handling and user feedback
+
+**Test the fix**:
+```bash
+npm run test:fighter-timing
+```
+
+### Command Registration Issues
+**Problem**: Commands not appearing or behaving incorrectly
+
+**Solution**:
+```bash
+# Full reset and redeploy
+npm run deploy:cleanup
+npm run deploy
+```
+
+**Verification**:
+```bash
+npm run deploy:diagnose
+```
+
 ## Best Practices
 
 ### Security
