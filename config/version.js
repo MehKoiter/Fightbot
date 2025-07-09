@@ -6,7 +6,7 @@
 
 export const VERSION_CONFIG = {
     // Current version info
-    version: "1.0.0-free",
+    version: "1.7.0-free",
     type: "FREE", // All features are now FREE
     
     // Feature flags - ALL ENABLED FOR FREE
@@ -19,6 +19,15 @@ export const VERSION_CONFIG = {
         venueInfo: true,
         fightTimes: true,
         refreshData: true,
+        
+        // Phase 7: Advanced Fighter Features (NEW!)
+        fighterProfiles: true,
+        fighterComparison: true,
+        fightingStyleAnalysis: true,
+        fightPredictions: true,
+        fighterHighlights: true,
+        advancedFighterStats: true,
+        fighterSearch: true,
         
         // Advanced features (now FREE for everyone!)
         detailedStats: true,

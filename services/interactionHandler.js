@@ -2,8 +2,12 @@ import discordjs from 'discord.js';
 const { CommandInteraction, Interaction, MessageEmbed } = discordjs;
 import { Event, fightParser } from './fightParser.js';
 import ufcService from './ufcService.js';
+import FighterInteractionHandler from './fighterInteractionHandler.js';
 
 export default class interactionHandler {
+  constructor() {
+    this.fighterHandler = new FighterInteractionHandler();
+  }
 
   /**
    * 
@@ -11,13 +15,52 @@ export default class interactionHandler {
    * @returns {void}
    */
   handleInteraction(interaction) {
+    // Handle button interactions
+    if (interaction.isButton()) {
+      return this.handleButtonInteraction(interaction);
+    }
+    
+    // Handle autocomplete interactions
+    if (interaction.isAutocomplete()) {
+      return this.handleAutocomplete(interaction);
+    }
+    
+    // Handle slash commands
     if (!interaction.isCommand()) {
       return;
     }
 
     const { commandName } = interaction;
-
     this.handleCommand(interaction, commandName);
+  }
+
+  /**
+   * Handle button interactions
+   * @param {Interaction} interaction 
+   */
+  async handleButtonInteraction(interaction) {
+    const customId = interaction.customId;
+    
+    // Fighter-related button interactions
+    if (customId.startsWith('fighter_') || customId.startsWith('comparison_')) {
+      return await this.fighterHandler.handleFighterInteraction(interaction);
+    }
+    
+    // Add other button handlers here as needed
+  }
+
+  /**
+   * Handle autocomplete interactions
+   * @param {Interaction} interaction 
+   */
+  async handleAutocomplete(interaction) {
+    const { commandName } = interaction;
+    
+    if (commandName === 'fighter') {
+      // Import fighter command to handle autocomplete
+      const fighterCommand = await import('../commands/fighter.js');
+      return await fighterCommand.default.autocomplete(interaction);
+    }
   }
   
   /**

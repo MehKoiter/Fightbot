@@ -18,6 +18,15 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
 - **Event Information** - Venue details, fight times, and event schedules
 - **Button Navigation** - Easy-to-use interactive buttons for exploring fight data
 
+### 🔥 **Phase 7: Advanced Fighter Features** *(NEW!)*
+- **Detailed Fighter Profiles** - Comprehensive fighter stats, records, and analysis
+- **Fighter Search & Autocomplete** - Smart search with autocomplete suggestions
+- **Fighter Comparison Tool** - Side-by-side fighter analysis and matchup predictions
+- **Fighting Style Analysis** - Striking, grappling, and ground game breakdowns
+- **Fight Predictions** - AI-powered fight outcome predictions with confidence ratings
+- **Career Highlights** - Notable fights, achievements, and social media links
+- **Interactive Fighter Stats** - Detailed analytics with visual comparisons
+
 ### 🎮 Interactive Buttons
 - **📋 Show Prelims** - View preliminary card fights
 - **📊 Fighter Records & Stats** - Detailed fighter statistics and records
@@ -26,6 +35,13 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
 - **📅 Fight Times & Schedule** - Event timing and broadcast information
 - **🔄 Refresh Data** - Update with the latest fight information
 - **🌐 View on UFC.com** - Direct link to the official UFC event page
+
+### 🥊 **Fighter Command Buttons** *(Phase 7)*
+- **📊 Detailed Stats** - Advanced fighter analytics and performance metrics
+- **🎬 Fight Highlights** - Career highlights and memorable moments
+- **⚔️ Compare Fighter** - Advanced fighter comparison tool
+- **🔮 Fight Prediction** - AI-powered matchup analysis and predictions
+- **🥊 Fighting Styles** - Detailed fighting style breakdown and analysis
 
 ## 🚀 Quick Start
 
@@ -68,6 +84,74 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
    ```bash
    npm start
    ```
+
+## 🎮 Commands
+
+### Core Commands
+
+#### `/fight`
+Get information about the upcoming UFC event with interactive fight card details.
+
+**Features:**
+- Complete main card and preliminary card information
+- Fighter records and rankings
+- Event venue and timing details
+- Interactive buttons for deeper exploration
+
+**Example:**
+```
+/fight
+```
+
+#### `/fighter <name> [compare]` *(Phase 7 - NEW!)*
+Get detailed information about a specific UFC fighter with advanced analytics.
+
+**Parameters:**
+- `name` (required): Fighter name to search for (supports autocomplete)
+- `compare` (optional): Compare with another fighter
+
+**Features:**
+- Comprehensive fighter profiles with stats and records
+- Fighting style analysis (striking, grappling, ground game)
+- Career highlights and achievements
+- Interactive buttons for detailed exploration
+- Fighter comparison with matchup analysis
+- Fight predictions with confidence ratings
+
+**Examples:**
+```
+/fighter name:Jon Jones
+/fighter name:Jon Jones compare:Islam Makhachev
+```
+
+**Interactive Options:**
+- 📊 **Detailed Stats** - Advanced analytics and performance metrics
+- 🎬 **Fight Highlights** - Career highlights and memorable moments  
+- ⚔️ **Compare Fighter** - Launch comparison tool
+- 🔮 **Fight Prediction** - AI-powered matchup analysis
+- 🥊 **Fighting Styles** - Detailed style breakdown
+
+#### `/info`
+Display bot information, version, and available features.
+
+**Features:**
+- Bot version and status information
+- Feature overview and capabilities
+- Support and contact information
+
+**Example:**
+```
+/info
+```
+
+### Testing Commands
+
+#### Test Phase 7 Features
+```bash
+npm run test:phase7
+```
+
+Run comprehensive tests for the new Advanced Fighter Features to ensure everything works correctly.
 
 ## 🚀 Production Deployment
 

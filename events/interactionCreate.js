@@ -1,4 +1,8 @@
 import { Events, EmbedBuilder } from 'discord.js';
+import FighterInteractionHandler from '../services/fighterInteractionHandler.js';
+
+// Initialize fighter interaction handler
+const fighterHandler = new FighterInteractionHandler();
 
 export default {
 	name: Events.InteractionCreate,
@@ -70,6 +74,24 @@ export default {
 			}
 		}
 
+		// Handle autocomplete interactions
+		if (interaction.isAutocomplete()) {
+			try {
+				const command = interaction.client.commands.get(interaction.commandName);
+				
+				if (!command) {
+					console.error(`❌ No command matching ${interaction.commandName} was found for autocomplete.`);
+					return;
+				}
+
+				if (command.autocomplete) {
+					await command.autocomplete(interaction);
+				}
+			} catch (error) {
+				console.error(`❌ Error handling autocomplete for ${interaction.commandName}:`, error.message);
+			}
+		}
+
 		// Handle button interactions
 		if (interaction.isButton()) {
 			try {
@@ -126,6 +148,12 @@ export default {
 async function handleButtonInteraction(interaction) {
 	const { customId } = interaction;
 	
+	// Fighter-related button interactions (Phase 7)
+	if (customId.startsWith('fighter_') || customId.startsWith('comparison_')) {
+		return await fighterHandler.handleFighterInteraction(interaction);
+	}
+	
+	// Existing fight button interactions
 	if (customId.startsWith('fight_')) {
 		const action = customId.split('_')[1];
 		
