@@ -113,6 +113,23 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
    npm start
    ```
 
+## 📚 Documentation
+
+FightBot includes comprehensive documentation organized by purpose:
+
+- **[📖 Complete Documentation](docs/)** - Full documentation index
+- **[👥 User Guide](docs/user/USER-GUIDE.md)** - How to use FightBot commands
+- **[🛠️ API Reference](docs/developer/API-REFERENCE.md)** - Developer documentation
+- **[🚀 Deployment Guide](docs/deployment/DEPLOYMENT.md)** - Deployment instructions
+- **[⚙️ Configuration Guide](docs/configuration/CONFIGURATION.md)** - Setup and configuration
+
+### Documentation Health Check
+```bash
+npm run docs:check
+```
+
+This command verifies documentation structure, checks for broken links, and provides a health score for the documentation.
+
 ## 🎮 Commands
 
 ### Core Commands
