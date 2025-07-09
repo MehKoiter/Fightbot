@@ -7,9 +7,6 @@ export default {
         .setDescription('Get information about FightBot commands and features'), 
     execute: async (interaction) => {
         try {
-            // Defer reply immediately to prevent timeout
-            await interaction.deferReply({ ephemeral: false });
-            
             const infoEmbed = new EmbedBuilder()
                 .setColor('#00ff00')
                 .setTitle(`🥊 FightBot ${VERSION_CONFIG.version}`)
@@ -18,24 +15,37 @@ export default {
                     {
                         name: '📋 Available Commands',
                         value: '• `/fight` - Get upcoming UFC event details\n' +
+                               '• `/fighter <name>` - Get detailed fighter profiles (NEW!)\n' +
+                               '• `/fighter <name> compare:<fighter>` - Compare fighters (NEW!)\n' +
                                '• `/info` - Show this information\n' +
                                '• `/donate` - Support FightBot development (optional)',
                         inline: false
                     },
                     {
-                        name: '🎯 Features (ALL FREE!)',
+                        name: '🔥 Phase 7: Advanced Fighter Features (NEW!)',
+                        value: '• **Fighter Profiles** - Detailed stats and records\n' +
+                               '• **Fighter Comparison** - Side-by-side analysis\n' +
+                               '• **Fighting Style Analysis** - Striking, grappling breakdowns\n' +
+                               '• **Fight Predictions** - AI-powered predictions\n' +
+                               '• **Career Highlights** - Notable fights and achievements\n' +
+                               '• **Interactive Buttons** - Explore fighter data easily',
+                        inline: false
+                    },
+                    {
+                        name: '🎯 Core Features (ALL FREE!)',
                         value: '• **Complete fight card details** - Full event information\n' +
                                '• **Fighter rankings** - Current UFC rankings\n' +
                                '• **Advanced analytics** - Detailed fight breakdowns\n' +
-                               '• **Interactive buttons** - Explore fight data easily\n' +
                                '• **Event schedules** - Never miss a fight\n' +
-                               '• **Fighter statistics** - Comprehensive fighter data\n' +
                                '• **Historical data** - Access to past events',
                         inline: false
                     },
                     {
                         name: '🚀 Getting Started',
-                        value: '1. Use `/fight` to see the next UFC event\n2. Click the interactive buttons for more details\n3. Use `/donate` to support development (optional)',
+                        value: '1. Use `/fight` to see the next UFC event\n' +
+                               '2. Use `/fighter Jon Jones` for fighter profiles\n' +
+                               '3. Use `/fighter Jon Jones compare:Islam Makhachev` to compare\n' +
+                               '4. Click interactive buttons for more details',
                         inline: false
                     },
                     {
@@ -50,16 +60,19 @@ export default {
                 })
                 .setTimestamp();
 
-            await interaction.editReply({ embeds: [infoEmbed] });
+            // Direct reply - no need to defer for static content
+            await interaction.reply({ embeds: [infoEmbed] });
+            
         } catch (error) {
             console.error('Info command error:', error);
             
+            // Simple error handling - only attempt response if we haven't already replied
             try {
-                const errorMessage = 'Sorry, there was an error displaying the information. Please try again later.';
                 if (!interaction.replied && !interaction.deferred) {
-                    await interaction.reply({ content: errorMessage, ephemeral: true });
-                } else {
-                    await interaction.editReply({ content: errorMessage });
+                    await interaction.reply({ 
+                        content: 'Sorry, there was an error displaying the information. Please try again later.',
+                        ephemeral: true 
+                    });
                 }
             } catch (replyError) {
                 console.error('Failed to send error response:', replyError);
