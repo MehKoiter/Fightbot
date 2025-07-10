@@ -312,8 +312,9 @@ export default class UFCStatsFighterService {
                 }
             });
 
-            if (!name) {
-                console.log('❌ Could not extract fighter name from UFC profile');
+            // Validate that we got a real name, not page artifacts
+            if (!name || name === 'Search results' || name.length < 2 || name.toLowerCase().includes('search')) {
+                console.log('❌ Invalid fighter name extracted or landed on search page, skipping profile');
                 return null;
             }
 
@@ -657,17 +658,13 @@ export default class UFCStatsFighterService {
             const fighters = [];
 
             // Parse search results - basic info only for autocomplete
-            $('.c-card-athlete-results__athlete').each((index, element) => {
+            $('.c-listing-athlete-flipcard__inner').each((index, element) => {
                 try {
                     const $fighter = $(element);
                     
-                    const name = $fighter.find('.c-card-athlete-results__name').text().trim() ||
-                                $fighter.find('.c-listing-athlete__name').text().trim() ||
-                                $fighter.find('h3').text().trim();
+                    const name = $fighter.find('.c-listing-athlete__name').text().trim();
                     
-                    const nickname = $fighter.find('.c-card-athlete-results__nickname').text().trim() ||
-                                   $fighter.find('.c-listing-athlete__nickname').text().trim() ||
-                                   '';
+                    const nickname = $fighter.find('.c-listing-athlete__nickname').text().trim();
                     
                     const profileUrl = $fighter.find('a').attr('href');
 
