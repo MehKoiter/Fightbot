@@ -10,12 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🚀 Added - Real-time UFC.com Fighter Data Integration
 - **Real-time Fighter Scraping**: Implemented dynamic UFC.com scraping to replace static fighter databases
 - **Intelligent Search Logic**: Strict full name/nickname matching with smart autocomplete suggestions
+- **Autocomplete Fallback System**: Popular fighters fallback when UFC.com is slow or unavailable (1.5s timeout)
+- **Enhanced Error Handling**: Robust interaction state checking and timeout protection for autocomplete
 - **Universal Fighter Coverage**: Access to any active UFC fighter through live data scraping
 - **Enhanced Debug Output**: Comprehensive logging for search operations and troubleshooting
 - **Volkanovski Fix**: Specifically resolved Alexander Volkanovski lookup issues
 
 ### 🔧 Fixed - Critical Fighter Search Issues
 - **Volkanovski Lookup**: Fixed "Fighter not found" errors for Alexander Volkanovski and similar fighters
+- **Critical Autocomplete Bug**: Fixed DiscordAPIError[10062] "Unknown interaction" by adding missing `await` for async suggestions
+- **Autocomplete Timeout Protection**: Added 2-second timeout and fallback to popular fighters for autocomplete
+- **Interaction State Management**: Enhanced error handling to prevent responding to already-acknowledged interactions
 - **Search Logic Overhaul**: Replaced partial matching with strict full name/nickname logic
 - **Static Database Removal**: Eliminated reliance on outdated static fighter data
 - **Name Parsing**: Improved handling of UFC.com HTML structure and fighter name extraction

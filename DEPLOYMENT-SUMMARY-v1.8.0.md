@@ -13,6 +13,9 @@
 - **Universal Fighter Coverage**: Access to any active UFC fighter through dynamic scraping
 
 ### 🔧 **Technical Improvements**
+- **Critical Autocomplete Bug Fix**: Fixed DiscordAPIError[10062] "Unknown interaction" by adding missing `await`
+- **Autocomplete Timeout Protection**: Added 2-second timeout and fallback to popular fighters
+- **Enhanced Interaction State Management**: Prevents responding to already-acknowledged interactions
 - **Test Suite Reliability**: Added 30-second timeout mechanism to prevent hanging tests
 - **Enhanced Error Handling**: Comprehensive logging and debugging for fighter searches
 - **Service Architecture**: Updated interaction handlers to use new UFC.com scraping service

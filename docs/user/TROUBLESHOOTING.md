@@ -30,10 +30,12 @@ Common issues and their solutions for FightBot users and administrators.
 - Wait a moment and try the command again
 - This is a timing issue that usually resolves quickly
 
-**Error**: "Unknown interaction"
+**Error**: "Unknown interaction" (DiscordAPIError[10062])
 **Solution**:
-- The command took too long to process
-- Try again - the bot has timeout protection
+- This was a critical bug in autocomplete that has been fixed in v1.8.0
+- The command took too long to process due to missing `await` for async suggestions
+- Update to the latest bot version - this error should no longer occur
+- If it persists, try again after a few seconds
 
 **Error**: "Command failed"
 **Solution**:
@@ -101,6 +103,26 @@ Common issues and their solutions for FightBot users and administrators.
 2. **Type More Letters**: Try typing at least 2-3 characters
 3. **Check Connection**: Ensure stable internet connection
 4. **Clear and Retry**: Clear the input and try typing again
+
+#### Autocomplete Issues
+
+**Problem**: Autocomplete suggestions not appearing or causing errors
+
+**Solutions**:
+1. **v1.8.0 Critical Bug Fix**:
+   - Fixed DiscordAPIError[10062] "Unknown interaction" caused by missing `await` in autocomplete
+   - Added 2-second timeout protection for autocomplete suggestions
+   - Implemented fallback to popular fighters when UFC.com is slow
+
+2. **If Autocomplete is Slow**:
+   - Type at least 2 characters for suggestions to appear
+   - Wait a moment - the bot fetches real-time data from UFC.com
+   - If no suggestions appear, popular fighters will be shown as fallback
+
+3. **Empty Autocomplete**:
+   - Ensure you're typing a valid fighter name
+   - Try well-known fighters like "Alexander Volkanovski" or "Conor McGregor"
+   - The system now uses strict matching for better accuracy
 
 #### Fighter Comparison Fails
 **Problem**: Fighter comparison doesn't work or shows error

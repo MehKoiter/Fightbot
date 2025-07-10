@@ -46,8 +46,11 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
 ## 🆕 Recent Updates (v1.8.0-free)
 
 ### ✅ **Latest Fixes & Improvements**
+- **Critical Autocomplete Bug Fix**: Fixed DiscordAPIError[10062] "Unknown interaction" in fighter autocomplete
 - **Real-time UFC.com Scraping**: Replaced static fighter database with live data scraping
 - **Alexander Volkanovski Fixed**: Resolved fighter lookup issues for Volkanovski and similar fighters
+- **Autocomplete Timeout Protection**: Added 2-second timeout and fallback to popular fighters
+- **Enhanced Error Handling**: Prevents responding to already-acknowledged interactions
 - **Intelligent Search Logic**: Strict full name/nickname matching with smart autocomplete
 - **Universal Fighter Access**: Now supports any active UFC fighter through live data
 - **Enhanced Documentation**: Updated guides to reflect new scraping approach and troubleshooting

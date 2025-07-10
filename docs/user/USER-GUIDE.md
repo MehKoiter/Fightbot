@@ -195,3 +195,12 @@ FightBot is actively developed with regular updates. All features remain complet
 **Enjoy using FightBot Free!** 🥊 Never miss another UFC event or fighter stat! 
 
 *Everything is FREE - no subscriptions, no premium tiers, just great UFC content for your Discord server.*
+
+---
+
+## 🛠️ Recent Improvements (v1.8.0)
+- ✅ **Critical Autocomplete Bug Fix**: Fixed DiscordAPIError[10062] that prevented autocomplete from working
+- ✅ **Real-time UFC.com Scraping**: Access to any active UFC fighter with live data
+- ✅ **Timeout Protection**: 2-second autocomplete timeout with fallback to popular fighters
+- ✅ **Enhanced Search**: Strict full name/nickname matching for more accurate results
+- ✅ **Better Error Handling**: Improved interaction state management and error recovery

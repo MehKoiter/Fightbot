@@ -197,3 +197,39 @@ Test the fighter command in Discord:
 - [API Reference](../developer/API-REFERENCE.md) - Fighter service API documentation
 - [Testing Guide](../developer/TESTING.md) - How to test fighter functionality
 - [User Guide](../user/USER-GUIDE.md) - How to use the fighter command
+
+### Critical Autocomplete Bug Fix (v1.8.0)
+
+**Issue**: DiscordAPIError[10062] "Unknown interaction" in autocomplete  
+**Root Cause**: Missing `await` for async suggestion fetching  
+**Impact**: Autocomplete would fail and cause interaction timeouts
+
+#### Technical Details
+```javascript
+// BEFORE (Broken):
+const suggestions = ufcStatsService.getAutocompleteSuggestions(focusedValue);
+
+// AFTER (Fixed):
+const suggestions = await ufcStatsService.getAutocompleteSuggestions(focusedValue);
+```
+
+#### Additional Improvements
+1. **Timeout Protection**: 2-second timeout for autocomplete to prevent Discord's 3-second limit
+2. **Fallback System**: Popular fighters shown if UFC.com is slow or unavailable
+3. **Interaction State Checking**: Prevents responding to already-acknowledged interactions
+4. **Enhanced Error Handling**: Graceful failure with empty suggestions instead of errors
+
+#### Implementation
+```javascript
+// Race against timeout
+const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Autocomplete timeout')), 2000)
+);
+
+const suggestions = await Promise.race([autocompletePromise, timeoutPromise]);
+
+// Fallback to popular fighters if UFC.com fails
+if (suggestions.length === 0) {
+    return popularFightersFallback(query);
+}
+```
