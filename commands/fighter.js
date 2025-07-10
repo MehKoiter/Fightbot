@@ -292,6 +292,10 @@ export default {
     async createComparisonEmbed(comparison) {
         const { fighter1, fighter2, comparison: comp } = comparison;
 
+        // Safely extract data with fallbacks
+        const f1Record = `${fighter1.wins || 0}-${fighter1.losses || 0}-${fighter1.draws || 0}`;
+        const f2Record = `${fighter2.wins || 0}-${fighter2.losses || 0}-${fighter2.draws || 0}`;
+
         const embed = new EmbedBuilder()
             .setColor('#ff6600')
             .setTitle(`⚔️ Fighter Comparison`)
@@ -299,39 +303,33 @@ export default {
             .addFields(
                 {
                     name: `🥊 ${fighter1.name}`,
-                    value: `Record: **${fighter1.record.wins}-${fighter1.record.losses}-${fighter1.record.draws}**\n` +
-                           `Height: ${fighter1.physicalStats.height}\n` +
-                           `Reach: ${fighter1.physicalStats.reach}\n` +
-                           `Age: ${fighter1.physicalStats.age}`,
+                    value: `**Record:** ${f1Record}\n` +
+                           `**Height:** ${fighter1.height || 'N/A'}\n` +
+                           `**Weight:** ${fighter1.weight || 'N/A'}\n` +
+                           `**Reach:** ${fighter1.reach || 'N/A'}\n` +
+                           `**Team:** ${fighter1.team || 'N/A'}`,
                     inline: true
                 },
                 {
                     name: `🥊 ${fighter2.name}`,
-                    value: `Record: **${fighter2.record.wins}-${fighter2.record.losses}-${fighter2.record.draws}**\n` +
-                           `Height: ${fighter2.physicalStats.height}\n` +
-                           `Reach: ${fighter2.physicalStats.reach}\n` +
-                           `Age: ${fighter2.physicalStats.age}`,
+                    value: `**Record:** ${f2Record}\n` +
+                           `**Height:** ${fighter2.height || 'N/A'}\n` +
+                           `**Weight:** ${fighter2.weight || 'N/A'}\n` +
+                           `**Reach:** ${fighter2.reach || 'N/A'}\n` +
+                           `**Team:** ${fighter2.team || 'N/A'}`,
                     inline: true
                 },
                 {
-                    name: '⚖️ Key Advantages',
-                    value: `**${fighter1.name}:**\n${comp.advantages.fighter1.join('\n') || 'None identified'}\n\n` +
-                           `**${fighter2.name}:**\n${comp.advantages.fighter2.join('\n') || 'None identified'}`,
+                    name: '⚖️ Analysis',
+                    value: `**Experience Edge:** ${comp.experienceEdge}\n` +
+                           `**Height Edge:** ${comp.heightEdge}\n` +
+                           `**Reach Edge:** ${comp.reachEdge}\n` +
+                           `**Record Edge:** ${comp.recordEdge}`,
                     inline: false
                 }
-            );
-
-        if (Math.abs(comp.physical.heightAdvantage) > 1) {
-            embed.addFields({
-                name: '📏 Physical Analysis',
-                value: `**Height:** ${comp.physical.heightAdvantage > 0 ? fighter1.name : fighter2.name} has ${Math.abs(comp.physical.heightAdvantage)}" advantage\n` +
-                       `**Reach:** ${comp.physical.reachAdvantage > 0 ? fighter1.name : fighter2.name} has ${Math.abs(comp.physical.reachAdvantage).toFixed(1)}" advantage`,
-                inline: false
-            });
-        }
-
-        embed.setTimestamp()
-             .setFooter({ text: 'FightBot • Fighter Comparison Tool' });
+            )
+            .setTimestamp()
+            .setFooter({ text: 'FightBot • Fighter Comparison Tool' });
 
         return embed;
     },
