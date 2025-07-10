@@ -144,7 +144,7 @@ FightBot underwent a complete transformation from a premium subscription Discord
 - **Data Parsing**: Cheerio for UFC.com scraping
 - **Database**: SQLite3 for anonymous analytics
 - **Architecture**: Pure Discord bot (no web server dependencies)
-- **Deployment**: Optimized for Railway, Render, Replit
+- **Deployment**: Optimized for Render, Replit
 
 ---
 
@@ -157,7 +157,7 @@ FightBot underwent a complete transformation from a premium subscription Discord
 - ✅ **UFC.com Parser Robustness** - Added multiple fallback selectors and enhanced error handling
 - ✅ **Cache Optimization** - Complete EventCache overhaul with LRU eviction, memory monitoring, and performance stats
 - ✅ **Error Message Enhancement** - Improved user feedback with timeout-specific messages and better UX
-- ✅ **Production Deployment Ready** - All systems tested and validated for Railway/Render deployment
+- ✅ **Production Deployment Ready** - All systems tested and validated for Render deployment
 
 **Medium Priority Achievements:**
 - ✅ **Fight Card Formatting** - Enhanced compact layout optimized for Discord mobile experience
@@ -270,7 +270,7 @@ FightBot underwent a complete transformation from a premium subscription Discord
 - **Open Source**: Transparent development and community contributions
 
 ### **Cost Considerations:**
-- **Hosting Costs**: ~$5-10/month for basic hosting (Railway/Render)
+- **Hosting Costs**: ~$5-10/month for basic hosting (Render)
 - **Development Time**: Volunteer-based development
 - **UFC Data Access**: Free public data scraping
 - **Discord API**: Free within rate limits

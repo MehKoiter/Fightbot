@@ -139,7 +139,7 @@ async function productionReadinessTest() {
             log('white', '• ✅ Comprehensive error handling and user feedback');
             
             log('yellow', '\nNext Steps:');
-            log('white', '• Deploy to Railway/Render for public testing');
+            log('white', '• Deploy to Render for public testing');
             log('white', '• Monitor real-world performance and error rates');
             log('white', '• Gather community feedback and usage analytics');
             log('white', '• Begin Phase 7 feature enhancements');

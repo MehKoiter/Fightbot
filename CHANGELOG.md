@@ -5,87 +5,24 @@ All notable changes to FightBot Free will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.2-free] - 2025-07-09
+## [1.7.2-free] - 2025-07-09
 
-### 🔧 Fixed - Race Condition Elimination and Interaction Deduplication
-- **Complete DiscordAPIError[40060] Resolution**: Eliminated all "Interaction has already been acknowledged" errors with race condition prevention
-- **Interaction State Manager**: Implemented dedicated interaction tracking system to prevent duplicate responses
-- **Race Condition Prevention**: Added interaction deduplication with unique ID tracking and processing state management
-- **Enhanced Autocomplete Safety**: Multiple layers of interaction state validation before responding
-- **Global Error Handler Improvements**: Smarter error handling that prevents acknowledgment conflicts
-- **Production-Grade Reliability**: Comprehensive interaction lifecycle management with automatic cleanup
+### 🚀 Added - UFC Stats Fighter Service
+- **New Fighter Data Source**: Implemented reliable UFC Stats Fighter Service to replace unreliable UFC.com scraping
+- **Comprehensive Fighter Database**: Added detailed profiles for Jon Jones, Israel Adesanya, and growing roster
+- **Enhanced Autocomplete**: Smart suggestions with fighter names, nicknames, and aliases
+- **Fighter Comparisons**: Detailed side-by-side analysis with physical stats and record comparisons
+- **Improved Error Handling**: Better error messages and suggestions when fighters not found
 
-### 🧪 Advanced Technical Improvements
-- **InteractionStateManager Utility**: New utility class for tracking interaction processing state
-- **Duplicate Processing Prevention**: Blocks multiple handlers from processing the same interaction simultaneously
-- **Interaction ID Tracking**: Maps interaction IDs to processing state with timestamp-based cleanup
-- **Enhanced isSafeToRespond Logic**: Combines Discord.js state with internal tracking for bulletproof validation
-- **Error Boundary Refinement**: Specific error type filtering to prevent cascade failures
-- **Test Coverage Expansion**: Added race condition simulation and interaction state manager validation tests
-
-### 🚀 Performance and Reliability Gains
-- **Zero Race Conditions**: 100% prevention of duplicate interaction responses in testing
-- **Improved Error Recovery**: Graceful handling of acknowledgment conflicts without user impact
-- **Memory Efficient Tracking**: Automatic cleanup of old interaction records (30-second TTL)
-- **Production Validated**: Comprehensive test suite covering single, duplicate, and multi-interaction scenarios
-- **Debug Monitoring**: Enhanced logging for interaction state transitions and race condition detection
-
-## [1.8.1-free] - 2025-07-09
-
-### 🔧 Fixed - Critical Interaction Errors and Performance Issues
-- **DiscordAPIError[10062] Resolution**: Completely resolved "Unknown interaction" errors through better timeout management
-- **DiscordAPIError[40060] Fix**: Fixed "Interaction has already been acknowledged" errors with improved state checking
-- **Lightweight Autocomplete**: Implemented dedicated lightweight search method for autocomplete (no profile fetching)
-- **Reduced Timeout Protection**: Optimized autocomplete timeout from 2s to 1.5s with 1s search timeout
-- **Fighter Command Safety**: Added proper null checking for achievements and other optional properties
-- **Fight Command Stability**: Enhanced interaction state management and immediate deferReply handling
-- **Error Handling Improvements**: Better error boundaries and fallback mechanisms for all interaction types
-
-### 🚀 Performance Optimizations
-- **Autocomplete Performance**: 80% faster autocomplete with lightweight search (8s → 1s timeout)
-- **Reduced API Calls**: Separated lightweight search from full profile fetching
-- **Better Caching Strategy**: Dedicated cache for lightweight search results
-- **Memory Optimization**: Reduced data fetching for autocomplete suggestions only
-
-### 🧪 Technical Improvements
-- **Interaction State Validation**: Comprehensive checks for `interaction.responded` and `interaction.deferred`
-- **Timeout Race Conditions**: Improved Promise.race handling with proper error boundaries
-- **Service Method Separation**: Split `searchFighter` and `lightweightSearchFighter` for different use cases
-- **Enhanced Logging**: Better debug output for tracking interaction states and timeouts
-
-## [1.8.0-free] - 2025-01-15
-
-### 🚀 Added - Real-time UFC.com Fighter Data Integration
-- **Real-time Fighter Scraping**: Implemented dynamic UFC.com scraping to replace static fighter databases
-- **Intelligent Search Logic**: Strict full name/nickname matching with smart autocomplete suggestions
-- **Autocomplete Fallback System**: Popular fighters fallback when UFC.com is slow or unavailable (1.5s timeout)
-- **Enhanced Error Handling**: Robust interaction state checking and timeout protection for autocomplete
-- **Universal Fighter Coverage**: Access to any active UFC fighter through live data scraping
-- **Enhanced Debug Output**: Comprehensive logging for search operations and troubleshooting
-- **Volkanovski Fix**: Specifically resolved Alexander Volkanovski lookup issues
-
-### 🔧 Fixed - Critical Fighter Search Issues
-- **Volkanovski Lookup**: Fixed "Fighter not found" errors for Alexander Volkanovski and similar fighters
-- **Critical Autocomplete Bug**: Fixed DiscordAPIError[10062] "Unknown interaction" by adding missing `await` for async suggestions
-- **Autocomplete Timeout Protection**: Added 2-second timeout and fallback to popular fighters for autocomplete
-- **Interaction State Management**: Enhanced error handling to prevent responding to already-acknowledged interactions
-- **Search Logic Overhaul**: Replaced partial matching with strict full name/nickname logic
-- **Static Database Removal**: Eliminated reliance on outdated static fighter data
-- **Name Parsing**: Improved handling of UFC.com HTML structure and fighter name extraction
+### 🔧 Fixed - Fighter Command Issues
+- **Fighter Lookup Failures**: Fixed "Fighter Comparison Failed" errors for Jon Jones and Israel Adesanya
+- **Data Accuracy**: Replaced mock data with real fighter statistics, records, and fight history
+- **Response Speed**: Implemented 30-minute caching for faster subsequent lookups
+- **Autocomplete Reliability**: Fixed timeout issues and improved suggestion accuracy
 
 ### 📚 Documentation Updates
-- **Fighter Data Migration Guide**: Updated to reflect real-time scraping implementation
-- **Search Logic Documentation**: Added detailed explanation of new matching behavior
-- **Troubleshooting Guide**: Enhanced with UFC.com scraping-specific solutions
-- **Test Documentation**: Updated test coverage and validation procedures
-
-### 🧪 Testing Improvements
-- **Test Suite Reliability**: Added 30-second timeout mechanism to prevent hanging tests
-- **Performance Test Fixes**: Fixed process exit handling in all performance tests
-- **Test Runner Enhancement**: Improved error handling and timeout protection
-- **100% Test Success Rate**: All 13 tests now pass consistently (5 unit, 3 integration, 5 performance)
-
-## [1.7.2-free] - 2025-07-09
+- **New Feature Guide**: Added comprehensive Fighter Data Migration documentation
+- **API Reference**: Updated with UFCStatsFighterService API and data structures
 - **User Guide**: Enhanced fighter command examples and supported fighter list
 - **Troubleshooting**: Added solutions for common fighter command issues
 - **Testing Guide**: Updated with new UFC Stats service tests
@@ -179,7 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🔧 Improved - Developer Experience
 - **Enhanced Logging**: Better error reporting and debugging information
 - **Health Monitoring**: Improved health check endpoints for deployment platforms
-- **Auto-deployment**: Seamless integration with Render.com and Railway
+- **Auto-deployment**: Seamless integration with Render.com
 - **Error Messages**: More informative error messages for better debugging
 
 ### 🚀 Deployment Improvements

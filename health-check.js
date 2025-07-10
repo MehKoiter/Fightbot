@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Simple health check script for Railway deployment
+ * Simple health check script for Render deployment
  * Can be used to verify the bot is running properly
  */
 

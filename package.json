@@ -10,7 +10,6 @@
     "dev": "node --watch index.js",
     "deploy": "node deploy-commands.js",
     "deploy:global": "node deploy-commands.js --global",
-    "deploy:railway": "node utils/deploy-commands-railway.js",
     "deploy:cleanup": "node utils/cleanup-commands.js",
     "deploy:diagnose": "node utils/diagnose-commands.js",
     "test": "node test-runner.js",
