@@ -12,6 +12,17 @@ export default class UFCStatsFighterService {
         this.baseUrl = 'https://www.ufc.com';
         this.cache = new Map();
         this.cacheTimeout = 1800000; // 30 minutes
+        
+        // Fallback list of popular fighters for quick autocomplete
+        this.popularFighters = [
+            'Alexander Volkanovski', 'Islam Makhachev', 'Jon Jones', 'Max Holloway',
+            'Israel Adesanya', 'Conor McGregor', 'Khabib Nurmagomedov', 'Amanda Nunes',
+            'Valentina Shevchenko', 'Francis Ngannou', 'Kamaru Usman', 'Rose Namajunas',
+            'Jorge Masvidal', 'Dustin Poirier', 'Tony Ferguson', 'Daniel Cormier',
+            'Stipe Miocic', 'Joanna Jedrzejczyk', 'Holly Holm', 'Ronda Rousey',
+            'Anderson Silva', 'Georges St-Pierre', 'Chuck Liddell', 'Tito Ortiz',
+            'Sean O\'Malley', 'Paddy Pimblett', 'Colby Covington', 'Leon Edwards'
+        ];
     }
 
     /**
@@ -561,11 +572,40 @@ export default class UFCStatsFighterService {
                 return [];
             }
 
-            const searchResults = await this.searchFighter(query);
-            return searchResults.map(fighter => ({
-                name: fighter.name,
-                value: fighter.name
-            })).slice(0, 25); // Discord limit
+            // Try to get suggestions from UFC.com with a timeout
+            const searchPromise = this.searchFighter(query);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Search timeout')), 1500)
+            );
+
+            try {
+                const searchResults = await Promise.race([searchPromise, timeoutPromise]);
+                if (searchResults && searchResults.length > 0) {
+                    return searchResults.map(fighter => ({
+                        name: fighter.name,
+                        value: fighter.name
+                    })).slice(0, 25); // Discord limit
+                }
+            } catch (timeoutError) {
+                console.log('⚠️ UFC.com search timed out, using fallback suggestions');
+            }
+
+            // Fallback to popular fighters list if search fails or times out
+            const queryLower = query.toLowerCase();
+            const fallbackSuggestions = this.popularFighters
+                .filter(fighter => fighter.toLowerCase().includes(queryLower))
+                .map(fighter => ({
+                    name: fighter,
+                    value: fighter
+                }))
+                .slice(0, 10); // Limit fallback suggestions
+
+            if (fallbackSuggestions.length > 0) {
+                console.log(`📋 Using ${fallbackSuggestions.length} fallback suggestions for: ${query}`);
+                return fallbackSuggestions;
+            }
+
+            return [];
 
         } catch (error) {
             console.error('❌ Error getting autocomplete suggestions:', error.message);

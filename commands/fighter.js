@@ -40,33 +40,48 @@ export default {
             );
             
             const autocompletePromise = (async () => {
-                const focusedValue = interaction.options.getFocused();
-                
-                // Return empty if no input
-                if (!focusedValue || focusedValue.length === 0) {
-                    return [];
+                try {
+                    const focusedValue = interaction.options.getFocused();
+                    
+                    // Return empty if no input
+                    if (!focusedValue || focusedValue.length === 0) {
+                        return [];
+                    }
+
+                    // Skip very short queries to avoid excessive UFC.com requests
+                    if (focusedValue.length < 2) {
+                        return [];
+                    }
+                    
+                    // Use UFC Stats service for autocomplete suggestions
+                    const ufcStatsService = new UFCStatsFighterService();
+                    const suggestions = await ufcStatsService.getAutocompleteSuggestions(focusedValue);
+                    
+                    // Ensure we return valid format even if service returns unexpected data
+                    if (!Array.isArray(suggestions)) {
+                        console.log('⚠️ UFC service returned non-array suggestions');
+                        return [];
+                    }
+                    
+                    return suggestions.slice(0, 25); // Discord autocomplete limit
+                } catch (error) {
+                    console.error('❌ Error in autocomplete promise:', error.message);
+                    return []; // Return empty array on any error
                 }
-                
-                // Use UFC Stats service for autocomplete suggestions
-                const ufcStatsService = new UFCStatsFighterService();
-                const suggestions = ufcStatsService.getAutocompleteSuggestions(focusedValue);
-                
-                return suggestions
-                    .slice(0, 25) // Discord autocomplete limit
-                    .map(fighter => ({
-                        name: fighter,
-                        value: fighter
-                    }));
             })();
 
             // Race against timeout
             const suggestions = await Promise.race([autocompletePromise, timeoutPromise]);
             
+            // Ensure we have a valid array of suggestions
+            const validSuggestions = Array.isArray(suggestions) ? suggestions : [];
+            
             // Final check before responding
-            if (!interaction.responded) {
-                await interaction.respond(suggestions);
+            if (!interaction.responded && !interaction.deferred) {
+                await interaction.respond(validSuggestions);
+                console.log(`✅ Responded with ${validSuggestions.length} autocomplete suggestions`);
             } else {
-                console.log('⚠️ Interaction became responded during processing');
+                console.log('⚠️ Interaction already responded or deferred during processing');
             }
             
         } catch (error) {
