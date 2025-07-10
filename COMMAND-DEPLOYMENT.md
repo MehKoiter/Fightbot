@@ -1,6 +1,6 @@
 # 🔧 Command Deployment Guide
 
-## 🚨 Latest Fixes (v1.7.1-free)
+## 🚨 Latest Fixes (v1.8.0-free)
 
 ### Fixed Issues:
 - ✅ **Duplicate Commands**: Resolved duplicate command registrations
