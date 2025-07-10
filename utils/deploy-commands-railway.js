@@ -20,10 +20,10 @@ const commands = [];
 
 try {
     console.log('🔄 Loading command files...');
-    const commandFiles = await readdir(join(__dirname, 'commands'));
+    const commandFiles = await readdir(join(__dirname, '../commands'));
     
     for (const file of commandFiles.filter(file => file.endsWith('.js'))) {
-        const command = await import(`./commands/${file}`);
+        const command = await import(`../commands/${file}`);
         if (command.default?.data?.toJSON) {
             commands.push(command.default.data.toJSON());
             console.log(`✅ Loaded command: ${command.default.data.name}`);
