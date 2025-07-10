@@ -9,6 +9,12 @@ export default {
     
     execute: async (interaction) => {
         try {
+            // Check if interaction is already acknowledged before doing anything
+            if (interaction.replied || interaction.deferred) {
+                console.log('⚠️ Fight command interaction already acknowledged');
+                return;
+            }
+
             // Defer the reply IMMEDIATELY - this must happen within 3 seconds
             await interaction.deferReply();
 
@@ -191,14 +197,23 @@ export default {
                 .setTimestamp();
             
             try {
-                // Only try to respond if we haven't already responded
+                // Check interaction state before trying to respond
                 if (interaction.deferred && !interaction.replied) {
                     await interaction.editReply({ embeds: [errorEmbed] });
                 } else if (!interaction.replied && !interaction.deferred) {
                     await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                } else {
+                    console.log('⚠️ Fight command error: Cannot respond - interaction already handled');
                 }
             } catch (replyError) {
-                console.error('❌ Failed to send error message:', replyError);
+                // More specific error handling
+                if (replyError.code === 10062) {
+                    console.error('❌ Failed to send error message: Unknown interaction (already expired)');
+                } else if (replyError.message.includes('already been acknowledged')) {
+                    console.error('❌ Failed to send error message: Interaction already acknowledged');
+                } else {
+                    console.error('❌ Failed to send error message:', replyError);
+                }
                 // If we can't send a message, it's likely because the interaction has expired
                 // This is normal for Discord interactions that take too long
             }

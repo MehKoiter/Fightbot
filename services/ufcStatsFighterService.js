@@ -572,10 +572,10 @@ export default class UFCStatsFighterService {
                 return [];
             }
 
-            // Try to get suggestions from UFC.com with a timeout
-            const searchPromise = this.searchFighter(query);
+            // Use lightweight search for autocomplete (no detailed profile fetching)
+            const searchPromise = this.lightweightSearchFighter(query);
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Search timeout')), 1500)
+                setTimeout(() => reject(new Error('Search timeout')), 1000) // Reduced to 1 second
             );
 
             try {
@@ -609,6 +609,92 @@ export default class UFCStatsFighterService {
 
         } catch (error) {
             console.error('❌ Error getting autocomplete suggestions:', error.message);
+            return [];
+        }
+    }
+
+    /**
+     * Lightweight fighter search for autocomplete (no detailed profile fetching)
+     * @param {string} fighterName - The fighter's name to search for
+     * @returns {Array} Array of basic fighter information
+     */
+    async lightweightSearchFighter(fighterName) {
+        try {
+            console.log(`🔍 UFC Stats: Lightweight search for: ${fighterName}`);
+            
+            const cacheKey = `ufc_lightweight_${fighterName.toLowerCase()}`;
+            
+            // Check cache first
+            if (this.cache.has(cacheKey)) {
+                const cached = this.cache.get(cacheKey);
+                if (Date.now() - cached.timestamp < this.cacheTimeout) {
+                    console.log(`📋 Using cached lightweight search for: ${fighterName}`);
+                    return cached.data;
+                }
+            }
+
+            // Search UFC.com for the fighter
+            const searchUrl = `${this.baseUrl}/athletes/all?filters%5B0%5D=status%3A23&search=${encodeURIComponent(fighterName)}`;
+            
+            const response = await axios.get(searchUrl, {
+                timeout: 8000, // Reduced timeout for autocomplete
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1'
+                }
+            });
+
+            if (response.status !== 200) {
+                console.log(`❌ UFC search request failed with status: ${response.status}`);
+                return [];
+            }
+
+            const $ = cheerio.load(response.data);
+            const fighters = [];
+
+            // Parse search results - basic info only for autocomplete
+            $('.c-card-athlete-results__athlete').each((index, element) => {
+                try {
+                    const $fighter = $(element);
+                    
+                    const name = $fighter.find('.c-card-athlete-results__name').text().trim() ||
+                                $fighter.find('.c-listing-athlete__name').text().trim() ||
+                                $fighter.find('h3').text().trim();
+                    
+                    const nickname = $fighter.find('.c-card-athlete-results__nickname').text().trim() ||
+                                   $fighter.find('.c-listing-athlete__nickname').text().trim() ||
+                                   '';
+                    
+                    const profileUrl = $fighter.find('a').attr('href');
+
+                    if (name && profileUrl) {
+                        fighters.push({
+                            name,
+                            nickname: nickname.replace(/"/g, ''),
+                            profileUrl: profileUrl.startsWith('http') ? profileUrl : `${this.baseUrl}${profileUrl}`
+                        });
+                    }
+                } catch (parseError) {
+                    console.error('❌ Error parsing fighter element:', parseError.message);
+                }
+            });
+
+            console.log(`✅ Found ${fighters.length} fighter(s) from UFC.com for "${fighterName}"`);
+
+            // Cache the results
+            this.cache.set(cacheKey, {
+                data: fighters,
+                timestamp: Date.now()
+            });
+
+            return fighters;
+
+        } catch (error) {
+            console.error('❌ UFC lightweight search error:', error.message);
             return [];
         }
     }

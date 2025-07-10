@@ -27,68 +27,66 @@ export default {
      * Handle autocomplete for fighter names
      */
     async autocomplete(interaction) {
+        // Immediately check if interaction is already acknowledged
+        if (interaction.responded || interaction.deferred) {
+            console.log('⚠️ Autocomplete interaction already acknowledged');
+            return;
+        }
+
         try {
-            // Check interaction state immediately
-            if (interaction.responded) {
-                console.log('⚠️ Autocomplete interaction already responded to');
+            const focusedValue = interaction.options.getFocused();
+            
+            // Return empty if no input or too short
+            if (!focusedValue || focusedValue.length < 2) {
+                if (!interaction.responded) {
+                    await interaction.respond([]);
+                }
                 return;
             }
 
-            // Quick timeout protection for autocomplete (Discord has 3 second limit)
+            // Create a race between autocomplete and timeout with shorter timeout
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Autocomplete timeout')), 2000)
+                setTimeout(() => reject(new Error('Autocomplete timeout')), 1500) // Reduced to 1.5 seconds
             );
             
             const autocompletePromise = (async () => {
-                try {
-                    const focusedValue = interaction.options.getFocused();
-                    
-                    // Return empty if no input
-                    if (!focusedValue || focusedValue.length === 0) {
-                        return [];
-                    }
-
-                    // Skip very short queries to avoid excessive UFC.com requests
-                    if (focusedValue.length < 2) {
-                        return [];
-                    }
-                    
-                    // Use UFC Stats service for autocomplete suggestions
-                    const ufcStatsService = new UFCStatsFighterService();
-                    const suggestions = await ufcStatsService.getAutocompleteSuggestions(focusedValue);
-                    
-                    // Ensure we return valid format even if service returns unexpected data
-                    if (!Array.isArray(suggestions)) {
-                        console.log('⚠️ UFC service returned non-array suggestions');
-                        return [];
-                    }
-                    
-                    return suggestions.slice(0, 25); // Discord autocomplete limit
-                } catch (error) {
-                    console.error('❌ Error in autocomplete promise:', error.message);
-                    return []; // Return empty array on any error
+                const ufcStatsService = new UFCStatsFighterService();
+                const suggestions = await ufcStatsService.getAutocompleteSuggestions(focusedValue);
+                
+                // Ensure we return valid format
+                if (!Array.isArray(suggestions)) {
+                    console.log('⚠️ UFC service returned non-array suggestions');
+                    return [];
                 }
+                
+                return suggestions.slice(0, 25); // Discord autocomplete limit
             })();
 
             // Race against timeout
-            const suggestions = await Promise.race([autocompletePromise, timeoutPromise]);
+            let suggestions;
+            try {
+                suggestions = await Promise.race([autocompletePromise, timeoutPromise]);
+            } catch (timeoutError) {
+                console.log('⚠️ Autocomplete for fighter is taking too long...');
+                suggestions = []; // Use empty suggestions on timeout
+            }
             
-            // Ensure we have a valid array of suggestions
-            const validSuggestions = Array.isArray(suggestions) ? suggestions : [];
-            
-            // Final check before responding
+            // Final safety check before responding
             if (!interaction.responded && !interaction.deferred) {
-                await interaction.respond(validSuggestions);
-                console.log(`✅ Responded with ${validSuggestions.length} autocomplete suggestions`);
+                await interaction.respond(Array.isArray(suggestions) ? suggestions : []);
+                console.log(`✅ Responded with ${suggestions.length} autocomplete suggestions`);
             } else {
-                console.log('⚠️ Interaction already responded or deferred during processing');
+                console.log('⚠️ Interaction state changed during processing - skipping response');
             }
             
         } catch (error) {
             console.error('Fighter autocomplete error:', error);
             
-            // Only try to respond if we haven't already and the error isn't about acknowledgment
-            if (!interaction.responded && !error.message.includes('already been acknowledged')) {
+            // Only try to respond if we haven't already and it's not an acknowledgment error
+            if (!interaction.responded && 
+                !interaction.deferred && 
+                !error.message.includes('already been acknowledged') &&
+                !error.message.includes('Unknown interaction')) {
                 try {
                     await interaction.respond([]);
                 } catch (responseError) {
@@ -279,7 +277,9 @@ export default {
                 },
                 {
                     name: '🏆 Achievements',
-                    value: fighter.achievements.slice(0, 3).join('\n') || 'Professional Fighter',
+                    value: (fighter.achievements && fighter.achievements.length > 0) 
+                        ? fighter.achievements.slice(0, 3).join('\n') 
+                        : 'Professional Fighter',
                     inline: false
                 }
             );
