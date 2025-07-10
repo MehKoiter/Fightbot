@@ -557,4 +557,84 @@ export default class SportsDataMMAService {
             return false;
         }
     }
+
+    /**
+     * Find UFC event by event number (e.g., UFC 199, UFC 309)
+     * @param {string|number} eventNumber - UFC event number
+     * @returns {Object|null} UFC event details
+     */
+    async getUFCEventByNumber(eventNumber) {
+        try {
+            if (!this.apiKey) {
+                throw new Error('SportsData.io API key not configured');
+            }
+
+            const cacheKey = `ufc_event_${eventNumber}`;
+            
+            // Check cache first
+            if (this.cache.has(cacheKey)) {
+                const cached = this.cache.get(cacheKey);
+                if (Date.now() - cached.timestamp < this.cacheTimeout) {
+                    console.log(`📋 Using cached UFC ${eventNumber} data`);
+                    return cached.data;
+                }
+            }
+
+            console.log(`🔍 SportsData.io: Searching for UFC ${eventNumber}`);
+            
+            // Search through multiple years to find the event
+            const currentYear = new Date().getFullYear();
+            // Limit search to years where we likely have API access (recent years)
+            const yearsToSearch = [currentYear, currentYear - 1];
+            
+            for (const year of yearsToSearch) {
+                try {
+                    const schedule = await this.getUFCSchedule(year.toString());
+                    
+                    if (schedule && schedule.length > 0) {
+                        // Look for events matching the number
+                        const matchingEvent = schedule.find(event => {
+                            const eventName = (event.Name || event.ShortName || '').toLowerCase();
+                            const searchPattern = `ufc ${eventNumber}`;
+                            
+                            // Check if event name contains the UFC number
+                            return eventName.includes(searchPattern) || 
+                                   eventName.includes(`ufc${eventNumber}`) ||
+                                   eventName === `ufc ${eventNumber}`;
+                        });
+                        
+                        if (matchingEvent) {
+                            // Get detailed event information
+                            const eventDetails = await this.getEventDetails(matchingEvent.EventId);
+                            
+                            if (eventDetails) {
+                                // Cache the results
+                                this.cache.set(cacheKey, {
+                                    data: eventDetails,
+                                    timestamp: Date.now()
+                                });
+                                
+                                console.log(`✅ Found UFC ${eventNumber}: ${eventDetails.Name}`);
+                                return eventDetails;
+                            }
+                        }
+                    }
+                } catch (yearError) {
+                    // If we get 401 for a specific year, continue to the next year
+                    if (yearError.response?.status === 401) {
+                        console.log(`⚠️ Limited API access for year ${year}, continuing search...`);
+                        continue;
+                    }
+                    throw yearError;
+                }
+            }
+
+            console.log(`❌ UFC ${eventNumber} not found in recent years`);
+            return null;
+
+        } catch (error) {
+            console.error(`❌ Error searching for UFC ${eventNumber}:`, error.message);
+            return null;
+        }
+    }
 }
