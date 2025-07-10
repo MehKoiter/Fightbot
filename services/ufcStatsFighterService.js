@@ -204,7 +204,7 @@ export default class UFCStatsFighterService {
                 }
             }
 
-            const profileUrl = fighterUrl.startsWith('http') ? fighterUrl : `${this.baseUrl}/athlete/${fighterUrl}`;
+            const profileUrl = this.cleanProfileUrl(fighterUrl);
             console.log(`🔍 Fetching UFC fighter profile: ${profileUrl}`);
 
             const response = await axios.get(profileUrl, {
@@ -259,6 +259,15 @@ export default class UFCStatsFighterService {
             const name = $('.hero-profile__name').text().trim() || 
                          $('.c-hero__headline-suffix').text().trim() ||
                          $('h1').first().text().trim();
+            
+            // Validate that we got a real name, not page artifacts
+            if (!name || name === 'Search results' || name.length < 2 || 
+                name.toLowerCase().includes('search') || 
+                name.toLowerCase().includes('results') ||
+                name.toLowerCase().includes('ufc')) {
+                console.log('❌ Invalid fighter name extracted, skipping profile');
+                return null;
+            }
             
             const nickname = $('.hero-profile__nickname').text().trim() ||
                            $('.c-hero__headline-prefix').text().trim().replace(/"/g, '');
@@ -575,7 +584,7 @@ export default class UFCStatsFighterService {
             // Use lightweight search for autocomplete (no detailed profile fetching)
             const searchPromise = this.lightweightSearchFighter(query);
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Search timeout')), 1000) // Reduced to 1 second
+                setTimeout(() => reject(new Error('Search timeout')), 2000) // Increased to 2 seconds
             );
 
             try {
@@ -759,5 +768,36 @@ export default class UFCStatsFighterService {
             
             return false;
         });
+    }
+
+    /**
+     * Clean and validate profile URLs before fetching
+     * @param {string} url - Raw URL or fighter slug
+     * @returns {string} Clean profile URL
+     */
+    cleanProfileUrl(url) {
+        if (!url) return null;
+        
+        // If it's already a full URL, validate and clean it
+        if (url.startsWith('http')) {
+            // Extract fighter slug and rebuild URL properly
+            const match = url.match(/\/athlete\/([^/?]+)/);
+            if (match) {
+                const fighterSlug = match[1]
+                    .replace(/\s+/g, '-')
+                    .replace(/[^a-zA-Z0-9-]/g, '') // Remove special characters except hyphens
+                    .toLowerCase();
+                return `${this.baseUrl}/athlete/${fighterSlug}`;
+            }
+            return url;
+        }
+        
+        // If it's just a fighter slug, clean it
+        // Replace spaces with hyphens and remove special characters
+        const fighterSlug = url
+            .replace(/\s+/g, '-')
+            .replace(/[^a-zA-Z0-9-]/g, '') // Remove special characters except hyphens
+            .toLowerCase();
+        return `${this.baseUrl}/athlete/${fighterSlug}`;
     }
 }
