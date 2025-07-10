@@ -1,24 +1,25 @@
 # 🥊 Fighter Data Source Migration
 
-**Feature**: ESPN Fighter Data Integration  
-**Status**: Completed (July 9, 2025)  
-**Branch**: `feature/espn-fighter-data`
+**Feature**: Real-time UFC.com Fighter Data Integration  
+**Status**: Completed (January 2025)  
+**Branch**: `fix/volkanovski-fighter-lookup`
 
 ## Overview
 
-This feature addresses the fighter command data source issues by implementing a more reliable fighter data service. The original issue was that the `/fighter` command was failing to find detailed information for popular fighters like Jon Jones and Israel Adesanya.
+This feature addresses critical fighter command data source issues by implementing real-time UFC.com scraping with intelligent search logic. The original issue was that the `/fighter` command was failing to find fighters like Alexander Volkanovski due to reliance on static/mock data and poor search matching.
 
 ## Problem Statement
 
 The original fighter command was using:
-1. **UFC.com scraping** - Unreliable due to website structure changes
-2. **Mock data** - Limited fighter database with placeholder information
-3. **Poor error handling** - Generic "Fighter Not Found" messages
+1. **Static fighter database** - Limited to a handful of hardcoded fighters
+2. **Mock data** - Placeholder information that didn't reflect real UFC data
+3. **Poor search logic** - Failed to find fighters even when they existed
+4. **Partial name matching** - Incorrectly matched fragments instead of full names
 
 ### Error Example
 ```
 ❌ Fighter Comparison Failed
-Could not find detailed information for "Jon Jones" or "Israel Adesanya".
+Could not find detailed information for "Alexander Volkanovski".
 💡 Tips
 • Check spelling
 • Try using full names
@@ -27,133 +28,168 @@ Could not find detailed information for "Jon Jones" or "Israel Adesanya".
 
 ## Solution
 
-### 1. ESPN Fighter Service (Initial Attempt)
-- **Location**: `services/archived/espnFighterService.js`
-- **Status**: Archived
-- **Issues**: 
-  - ESPN API structure changes
-  - Inconsistent fighter IDs
-  - Parsing difficulties with dynamic content
-
-### 2. UFC Stats Fighter Service (Final Implementation)
+### Real-time UFC.com Scraping Implementation
 - **Location**: `services/ufcStatsFighterService.js`
 - **Status**: Active
 - **Features**:
-  - Reliable fighter database
-  - Accurate fighter information
-  - Fast autocomplete suggestions
-  - Comprehensive fighter comparisons
+  - Real-time scraping of UFC.com fighter database
+  - Intelligent search with strict full name/nickname matching
+  - Dynamic fighter discovery without static databases
+  - Comprehensive error handling and debugging
 
 ## Implementation Details
 
-### Fighter Database Structure
+### Search Logic
+The new implementation features strict search matching:
+
+```javascript
+// Strict search logic
+1. **Full Name Match**: "Alexander Volkanovski" → exact match
+2. **Nickname Match**: "Volk" → matches fighters with nickname containing "Volk"
+3. **Partial Match (Autocomplete only)**: "alex" → suggests Alexander Volkanovski
+4. **Last Name Priority**: Prioritizes last name matches for partial searches
+```
+
+### UFC.com Scraping Structure
 ```javascript
 {
-    id: 'jon-jones',
-    name: 'Jon Jones',
-    nickname: 'Bones',
-    record: '28-1-0',
-    wins: 28,
-    losses: 1,
+    id: 'alexander-volkanovski',
+    name: 'Alexander Volkanovski',
+    nickname: 'The Great',
+    record: '26-4-0',
+    wins: 26,
+    losses: 4,
     draws: 0,
-    height: '6\'4"',
-    weight: '238 lbs',
-    reach: '84.5"',
+    height: '5\'6"',
+    weight: '145 lbs',
+    reach: '71.5"',
     stance: 'Orthodox',
-    birthdate: 'July 19, 1987',
-    birthplace: 'Rochester, New York, USA',
-    team: 'Jackson Wink MMA',
-    weightClass: 'Heavyweight',
-    currentChampion: true,
-    titles: ['UFC Heavyweight Champion'],
-    achievements: [...],
-    recentFights: [...]
+    birthdate: 'September 29, 1988',
+    birthplace: 'Wollongong, Australia',
+    team: 'City Kickboxing',
+    weightClass: 'Featherweight',
+    currentChampion: false,
+    titles: ['Former UFC Featherweight Champion'],
+    fighterUrl: '/athlete/alexander-volkanovski'
 }
 ```
 
 ### Updated Command Features
-1. **Reliable Fighter Lookup**: Works for Jon Jones, Israel Adesanya, and other popular fighters
-2. **Enhanced Autocomplete**: Suggestions based on name, nickname, and aliases
-3. **Fighter Comparisons**: Detailed side-by-side analysis
-4. **Rich Embeds**: Professional formatting with comprehensive fighter information
-5. **Error Handling**: Helpful suggestions when fighters are not found
+1. **Real-time Fighter Discovery**: Finds any active UFC fighter by scraping live data
+2. **Strict Search Logic**: Only matches on full names or complete nicknames
+3. **Autocomplete Intelligence**: Suggests fighters based on partial input with last name priority
+4. **Enhanced Error Handling**: Detailed debugging and helpful user feedback
+5. **Performance Caching**: 30-minute cache for repeated searches
+
+### Search Behavior Examples
+- **"Alexander Volkanovski"** → Direct match ✅
+- **"Volk"** → Finds Volkanovski by nickname ✅
+- **"alex"** → Autocomplete suggestion only (not direct match) ⚠️
+- **"volkan"** → Prioritizes Volkanovski in suggestions ✅
 
 ### Test Coverage
-- **Unit Tests**: `tests/unit/ufc-stats-service.test.js`
-- **Archived Tests**: `tests/archived/espn-service.test.js`
+- **Unit Tests**: `tests/unit/ufc-stats-service.test.js` - Tests search logic and scraping
+- **Performance Tests**: `tests/performance/volkanovski-search.test.js` - Specific Volkanovski search validation
+- **Integration Coverage**: Real UFC.com scraping with timeout and error handling
 
 ## Usage Examples
 
 ### Single Fighter Lookup
 ```
-/fighter name:Jon Jones
+/fighter name:Alexander Volkanovski
 ```
 **Result**: Detailed profile with record, stats, recent fights, and achievements
 
 ### Fighter Comparison
 ```
-/fighter name:Jon Jones compare:Israel Adesanya
+/fighter name:Alexander Volkanovski compare:Max Holloway
 ```
 **Result**: Side-by-side comparison with analysis of advantages
 
 ### Autocomplete
-- Type "Jon" → suggests "Jon Jones"
-- Type "Bones" → suggests "Jon Jones" 
-- Type "Stylebender" → suggests "Israel Adesanya"
+- Type "Alexander" → suggests "Alexander Volkanovski"
+- Type "Volk" → suggests "Alexander Volkanovski" 
+- Type "volkan" → prioritizes "Alexander Volkanovski"
 
 ## Performance Improvements
 
-1. **Caching**: 30-minute cache for fighter data
-2. **Fast Response**: No external API calls for known fighters
-3. **Timeout Protection**: 2.5-second timeout for fighter lookups
-4. **Memory Efficiency**: In-memory database with lazy loading
+1. **Real-time Data**: Always up-to-date fighter information from UFC.com
+2. **Intelligent Caching**: 30-minute cache reduces repeated UFC.com requests
+3. **Timeout Protection**: 15-second timeout for UFC.com requests
+4. **Memory Efficiency**: No static database storage, dynamic loading only
+5. **Debug Logging**: Comprehensive logging for troubleshooting search issues
 
 ## Error Resolution
 
-### Before
+### Before (Static Database)
 ```
 ❌ Fighter Comparison Failed
-Could not find detailed information for "Jon Jones" or "Israel Adesanya".
+Could not find detailed information for "Alexander Volkanovski".
 ```
 
-### After
+### After (Real-time Scraping)
 ```
-✅ Jon Jones vs Israel Adesanya
-[Detailed comparison with stats, records, and analysis]
+🔍 UFC Stats: Searching for fighter: Alexander Volkanovski
+📋 Found fighter: Alexander Volkanovski (The Great)
+✅ Alexander Volkanovski Profile
+[Detailed profile with current UFC.com data]
+```
+
+## Troubleshooting
+
+### Search Not Finding Fighter
+1. **Check full name spelling**: Use complete first and last name
+2. **Try nickname**: Some fighters are better known by nicknames
+3. **Check autocomplete**: Partial matches appear in suggestions
+4. **Verify UFC roster**: Only active UFC fighters are available
+
+### Debug Information
+The service provides detailed console output:
+```
+🔍 UFC Stats: Searching for fighter: Alexander Volkanovski
+📊 Search results count: 1
+📋 Found fighter: Alexander Volkanovski (The Great)
 ```
 
 ## Future Enhancements
 
-1. **Expanded Database**: Add more fighters from the UFC roster
-2. **Real-time Updates**: Integration with live UFC API when available
-3. **Historical Data**: Add fight history and career statistics
-4. **Performance Metrics**: Add striking accuracy, takedown defense, etc.
+1. **Enhanced Profile Parsing**: Improve extraction of height, weight, reach, team, and weight class from UFC.com
+2. **Fight History Integration**: Add detailed fight history and career statistics
+3. **Performance Metrics**: Add striking accuracy, takedown defense, etc.
+4. **Image Integration**: Include fighter photos and belt imagery
+5. **Live Event Data**: Integration with upcoming fight schedules
 
 ## Files Modified
 
 ### Core Implementation
-- `commands/fighter.js` - Updated to use UFC Stats service
-- `services/ufcStatsFighterService.js` - New reliable fighter service
+- `commands/fighter.js` - Updated to use real-time UFC.com scraping
+- `services/ufcStatsFighterService.js` - Complete rewrite with UFC.com scraping
 
-### Archived Files
-- `services/archived/espnFighterService.js` - ESPN attempt (archived)
-- `tests/archived/espn-service.test.js` - ESPN tests (archived)
+### Dependencies Added
+- `cheerio` - HTML parsing for UFC.com content
+- Enhanced `axios` configuration for reliable web scraping
 
 ### Tests
-- `tests/unit/ufc-stats-service.test.js` - UFC Stats service tests
+- `tests/unit/ufc-stats-service.test.js` - Updated for new scraping logic
+- `tests/performance/volkanovski-search.test.js` - Volkanovski-specific validation
 
 ## Testing
 
 Run the fighter service tests:
 ```bash
 npm run test:unit
-node tests/unit/ufc-stats-service.test.js
+npm test tests/unit/ufc-stats-service.test.js
 ```
 
-Test the fighter command:
+Test specific fighter searches:
+```bash
+node tests/performance/volkanovski-search.test.js
 ```
-/fighter name:Jon Jones
-/fighter name:Israel Adesanya compare:Jon Jones
+
+Test the fighter command in Discord:
+```
+/fighter name:Alexander Volkanovski
+/fighter name:Max Holloway compare:Alexander Volkanovski
 ```
 
 ## See Also

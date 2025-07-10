@@ -43,7 +43,7 @@ Ongoing maintenance and operational procedures.
 Documentation for specific features and phases.
 
 - **[Phase 7: Advanced Fighter Features](features/PHASE7.md)** - Latest fighter command enhancements
-- **[Fighter Data Source Migration](features/FIGHTER-DATA-MIGRATION.md)** - ESPN/UFC Stats integration *(New)*
+- **[Fighter Data Source Migration](features/FIGHTER-DATA-MIGRATION.md)** - Real-time UFC.com scraping integration *(Updated)*
 
 ### 📝 [Templates](templates/)
 Reusable templates for consistent documentation.

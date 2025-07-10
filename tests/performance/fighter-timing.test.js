@@ -55,4 +55,9 @@ async function testFighterCommand() {
     console.log('\n🎉 Fighter command timing fix ready for testing!');
 }
 
-testFighterCommand().catch(console.error);
+testFighterCommand().then(() => {
+    process.exit(0);
+}).catch((error) => {
+    console.error(error);
+    process.exit(1);
+});

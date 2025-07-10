@@ -235,4 +235,9 @@ async function runTimingTests() {
     }
 }
 
-runTimingTests().catch(console.error);
+runTimingTests().then(() => {
+    process.exit(0);
+}).catch((error) => {
+    console.error(error);
+    process.exit(1);
+});

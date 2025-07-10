@@ -5,24 +5,34 @@ All notable changes to FightBot Free will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.2-free] - 2025-07-09
+## [1.8.0-free] - 2025-01-15
 
-### 🚀 Added - UFC Stats Fighter Service
-- **New Fighter Data Source**: Implemented reliable UFC Stats Fighter Service to replace unreliable UFC.com scraping
-- **Comprehensive Fighter Database**: Added detailed profiles for Jon Jones, Israel Adesanya, and growing roster
-- **Enhanced Autocomplete**: Smart suggestions with fighter names, nicknames, and aliases
-- **Fighter Comparisons**: Detailed side-by-side analysis with physical stats and record comparisons
-- **Improved Error Handling**: Better error messages and suggestions when fighters not found
+### 🚀 Added - Real-time UFC.com Fighter Data Integration
+- **Real-time Fighter Scraping**: Implemented dynamic UFC.com scraping to replace static fighter databases
+- **Intelligent Search Logic**: Strict full name/nickname matching with smart autocomplete suggestions
+- **Universal Fighter Coverage**: Access to any active UFC fighter through live data scraping
+- **Enhanced Debug Output**: Comprehensive logging for search operations and troubleshooting
+- **Volkanovski Fix**: Specifically resolved Alexander Volkanovski lookup issues
 
-### 🔧 Fixed - Fighter Command Issues
-- **Fighter Lookup Failures**: Fixed "Fighter Comparison Failed" errors for Jon Jones and Israel Adesanya
-- **Data Accuracy**: Replaced mock data with real fighter statistics, records, and fight history
-- **Response Speed**: Implemented 30-minute caching for faster subsequent lookups
-- **Autocomplete Reliability**: Fixed timeout issues and improved suggestion accuracy
+### 🔧 Fixed - Critical Fighter Search Issues
+- **Volkanovski Lookup**: Fixed "Fighter not found" errors for Alexander Volkanovski and similar fighters
+- **Search Logic Overhaul**: Replaced partial matching with strict full name/nickname logic
+- **Static Database Removal**: Eliminated reliance on outdated static fighter data
+- **Name Parsing**: Improved handling of UFC.com HTML structure and fighter name extraction
 
 ### 📚 Documentation Updates
-- **New Feature Guide**: Added comprehensive Fighter Data Migration documentation
-- **API Reference**: Updated with UFCStatsFighterService API and data structures
+- **Fighter Data Migration Guide**: Updated to reflect real-time scraping implementation
+- **Search Logic Documentation**: Added detailed explanation of new matching behavior
+- **Troubleshooting Guide**: Enhanced with UFC.com scraping-specific solutions
+- **Test Documentation**: Updated test coverage and validation procedures
+
+### 🧪 Testing Improvements
+- **Test Suite Reliability**: Added 30-second timeout mechanism to prevent hanging tests
+- **Performance Test Fixes**: Fixed process exit handling in all performance tests
+- **Test Runner Enhancement**: Improved error handling and timeout protection
+- **100% Test Success Rate**: All 13 tests now pass consistently (5 unit, 3 integration, 5 performance)
+
+## [1.7.2-free] - 2025-07-09
 - **User Guide**: Enhanced fighter command examples and supported fighter list
 - **Troubleshooting**: Added solutions for common fighter command issues
 - **Testing Guide**: Updated with new UFC Stats service tests

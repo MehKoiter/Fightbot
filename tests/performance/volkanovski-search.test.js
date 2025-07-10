@@ -3,7 +3,7 @@
  * Quick test to verify the new UFC.com scraping works for Alexander Volkanovski
  */
 
-import UFCStatsFighterService from './services/ufcStatsFighterService.js';
+import UFCStatsFighterService from '../../services/ufcStatsFighterService.js';
 
 async function testVolkanovski() {
     console.log('🧪 Testing UFC Stats Fighter Service with Real Scraping...\n');
@@ -59,4 +59,9 @@ async function testVolkanovski() {
     console.log('\n🏁 Test complete!');
 }
 
-testVolkanovski().catch(console.error);
+testVolkanovski().then(() => {
+    process.exit(0);
+}).catch((error) => {
+    console.error(error);
+    process.exit(1);
+});

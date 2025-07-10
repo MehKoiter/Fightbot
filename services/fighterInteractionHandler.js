@@ -1,16 +1,16 @@
 /**
  * Fighter Button Interaction Handler
- * Phase 7: Advanced Fighter Features
+ * Updated January 2025: Real-time UFC.com Scraping
  * 
  * Handles button interactions for fighter profiles and comparisons
  */
 
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import FighterService from "../services/fighterService.js";
+import UFCStatsFighterService from "./ufcStatsFighterService.js";
 
 export default class FighterInteractionHandler {
     constructor() {
-        this.fighterService = new FighterService();
+        this.fighterService = new UFCStatsFighterService();
     }
 
     /**

@@ -38,6 +38,18 @@ async function runTest(testFile) {
         
         let output = '';
         let hasError = false;
+        let timeoutHandler;
+        
+        // Set a timeout of 30 seconds for each test
+        timeoutHandler = setTimeout(() => {
+            console.log(`   ⏱️ TIMEOUT - Killing test after 30 seconds`);
+            child.kill('SIGTERM');
+            setTimeout(() => {
+                if (!child.killed) {
+                    child.kill('SIGKILL');
+                }
+            }, 5000);
+        }, 30000);
         
         child.stdout.on('data', (data) => {
             output += data.toString();
@@ -49,6 +61,7 @@ async function runTest(testFile) {
         });
         
         child.on('close', (code) => {
+            clearTimeout(timeoutHandler);
             const duration = Date.now() - startTime;
             resolve({
                 file: testFile,
@@ -56,6 +69,18 @@ async function runTest(testFile) {
                 duration,
                 output,
                 code
+            });
+        });
+        
+        child.on('error', (error) => {
+            clearTimeout(timeoutHandler);
+            const duration = Date.now() - startTime;
+            resolve({
+                file: testFile,
+                success: false,
+                duration,
+                output: output + `\nProcess error: ${error.message}`,
+                code: -1
             });
         });
     });

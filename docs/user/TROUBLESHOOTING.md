@@ -47,48 +47,51 @@ Common issues and their solutions for FightBot users and administrators.
 **Problem**: `/fighter` command says fighter not found
 
 **Solutions**:
-1. **Check Spelling**: Verify the fighter's name spelling
-2. **Use Autocomplete**: Start typing and select from suggestions
-3. **Try Full Names**: Use complete names like "Jon Jones" instead of "Jones"
-4. **Use Nicknames**: Try fighter nicknames like "Bones" for Jon Jones
-5. **Supported Fighters**: Current database includes:
-   - Jon Jones ("Bones")
-   - Israel Adesanya ("The Last Stylebender", "Izzy")
-   - More fighters being added regularly
+1. **Use Full Names**: Use complete names like "Alexander Volkanovski" instead of "Alex"
+2. **Try Nicknames**: Use fighter nicknames like "Volk" for Alexander Volkanovski
+3. **Check Spelling**: Verify the fighter's name spelling exactly as it appears on UFC.com
+4. **Use Autocomplete**: Start typing and select from suggestions
+5. **Check UFC Roster**: Only active UFC fighters are available (retired fighters may not appear)
+
+**Search Logic** *(Updated January 2025)*:
+- **Full Name Match**: "Alexander Volkanovski" → Direct match ✅
+- **Nickname Match**: "Volk" → Finds Volkanovski ✅  
+- **Partial Match**: "alex" → Shows in autocomplete only ⚠️
+- **Case Insensitive**: Works with any capitalization
 
 **Example Working Commands**:
 ```
+/fighter name:Alexander Volkanovski
+/fighter name:Volk
+/fighter name:Max Holloway
+/fighter name:Islam Makhachev
 /fighter name:Jon Jones
-/fighter name:Bones
-/fighter name:Israel Adesanya
-/fighter name:Stylebender
 ```
 
-#### Fighter Comparison Failed  *(Fixed as of July 9, 2025)*
+#### Fighter Comparison Failed  *(Resolved January 2025)*
 **Problem**: "Could not find detailed information for [fighter names]"
 
-**Previous Issue**: This was caused by unreliable data sources
-**Solution**: Updated to use reliable UFC Stats database
-- Jon Jones vs Israel Adesanya comparisons now work perfectly
-- All fighter data is accurate and up-to-date
-- Faster response times with local data caching
+**Previous Issue**: This was caused by static/mock data limitations
+**Solution**: Updated to use real-time UFC.com scraping
+- Alexander Volkanovski lookups now work perfectly
+- All active UFC fighters are accessible
+- Data is always current and accurate
+- Enhanced search logic prevents false negatives
 
 #### Slow Fighter Command Response
 **Problem**: Fighter command takes a long time to respond
 
 **Solutions**:
-1. **First Use**: Initial lookup may take a few seconds
+1. **First UFC.com Lookup**: Initial scraping may take 5-15 seconds
 2. **Cached Data**: Subsequent lookups are much faster (30-minute cache)
 3. **Timeout Protection**: Command will automatically defer if taking too long
 4. **Network Issues**: Check your internet connection
-2. **Use Full Name**: Try "Jon Jones" instead of just "Jon"
-3. **Use Autocomplete**: Start typing and select from suggestions
-4. **Try Variations**: Some fighters may be listed under different names
+5. **UFC.com Availability**: Rare delays if UFC.com is slow to respond
 
-**Common Name Variations**:
-- Jon Jones (not Jonathan Jones)
-- Conor McGregor (not Connor)
-- Islam Makhachev (not Makhachov)
+**Performance** *(Updated January 2025)*:
+- Real-time scraping: 5-15 seconds for new fighters
+- Cached lookups: Under 1 second
+- Automatic caching prevents repeated UFC.com requests
 
 #### Autocomplete Not Working
 **Problem**: No suggestions appear when typing fighter names

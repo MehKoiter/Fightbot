@@ -3,7 +3,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![Discord.js](https://img.shields.io/badge/Discord.js-14.8.0-blue.svg)](https://discord.js.org/)
 [![License](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.7.1--free-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-1.8.0--free-blue.svg)](package.json)
 
 ![FightBot Logo](img/mmaGloveSmall.png)
 
@@ -43,11 +43,14 @@ FightBot Free is a comprehensive Discord bot that brings UFC fight information d
 - **🔮 Fight Prediction** - AI-powered matchup analysis and predictions
 - **🥊 Fighting Styles** - Detailed fighting style breakdown and analysis
 
-## 🆕 Recent Updates (v1.7.1-free)
+## 🆕 Recent Updates (v1.8.0-free)
 
 ### ✅ **Latest Fixes & Improvements**
-- **Fighter Command Fixed**: Resolved DiscordAPIError[10062] "Unknown interaction" in `/fighter` command
-- **Duplicate Commands Resolved**: Fixed duplicate command registrations in Discord
+- **Real-time UFC.com Scraping**: Replaced static fighter database with live data scraping
+- **Alexander Volkanovski Fixed**: Resolved fighter lookup issues for Volkanovski and similar fighters
+- **Intelligent Search Logic**: Strict full name/nickname matching with smart autocomplete
+- **Universal Fighter Access**: Now supports any active UFC fighter through live data
+- **Enhanced Documentation**: Updated guides to reflect new scraping approach and troubleshooting
 - **Hybrid Timing System**: Smart response handling - fast for cached data, deferred for slow operations
 - **Command Management Tools**: Added diagnostic and cleanup tools for deployment issues
 - **Interaction Reliability**: Enhanced error handling to prevent token expiration issues

@@ -46,3 +46,6 @@ const noData = eventCache.get('non_existent_key');
 console.log(`No data result: ${noData}`);
 
 console.log('🧪 Cache test complete.');
+
+// Explicitly exit the process
+process.exit(0);

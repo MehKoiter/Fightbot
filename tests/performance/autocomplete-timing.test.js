@@ -116,4 +116,9 @@ async function testAutocompleteHandling() {
     console.log('🎉 Autocomplete timing test completed!');
 }
 
-testAutocompleteHandling().catch(console.error);
+testAutocompleteHandling().then(() => {
+    process.exit(0);
+}).catch((error) => {
+    console.error(error);
+    process.exit(1);
+});

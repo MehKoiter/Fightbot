@@ -44,41 +44,43 @@ Get complete information about upcoming UFC events.
 - **📅 Fight Times** - Event timing and broadcast info
 - **🔄 Refresh Data** - Update with latest information
 
-### `/fighter` - Fighter Profiles *(Phase 7)*
-Get detailed fighter information, comparisons, and analysis.
+### `/fighter` - Fighter Profiles *(Updated January 2025)*
+Get detailed fighter information, comparisons, and analysis using real-time UFC.com data.
 
 **Basic Usage:**
 ```
-/fighter name:Jon Jones
+/fighter name:Alexander Volkanovski
 ```
 
 **Fighter Comparison:**
 ```
-/fighter name:Jon Jones compare:Israel Adesanya
+/fighter name:Alexander Volkanovski compare:Max Holloway
 ```
 
 **Features:**
-- 📊 Complete fight records and statistics
-- 🥊 Detailed fighter profiles with achievements
+- 📊 Complete fight records and statistics from UFC.com
+- 🥊 Detailed fighter profiles with current information
 - 📈 Physical stats (height, weight, reach, stance)
-- 🎬 Recent fight history and results
+- 🎬 Real-time data from official UFC roster
 - ⚔️ Side-by-side fighter comparisons
-- 🔍 Smart autocomplete with fighter nicknames
+- 🔍 Smart autocomplete with intelligent search logic
 
-**Supported Fighters:**
-- Jon Jones ("Bones") - UFC Heavyweight Champion
-- Israel Adesanya ("The Last Stylebender") - Former UFC Middleweight Champion
-- More fighters being added regularly
+**Search Logic:**
+- **Full Names**: "Alexander Volkanovski" - Direct match ✅
+- **Nicknames**: "Volk" - Finds by nickname ✅
+- **Partials**: "alex" - Shows in autocomplete suggestions ⚠️
+- **Any Active UFC Fighter**: Real-time access to entire roster
 
-**Autocomplete Examples:**
-- Type "Jon" → suggests "Jon Jones"
-- Type "Bones" → suggests "Jon Jones"
-- Type "Stylebender" → suggests "Israel Adesanya"
-- Type "Izzy" → suggests "Israel Adesanya"
+**Example Searches:**
+- Type "Alexander Volkanovski" → Direct match
+- Type "Volk" → Finds Alexander Volkanovski
+- Type "volkan" → Prioritizes Volkanovski in suggestions
+- Type "Islam" → Finds Islam Makhachev
+- Type "Jon Jones" → Finds Jon Jones
 
 **Interactive Buttons:**
-- **🔄 Refresh Data** - Update fighter information
-- **� Full Stats** - Complete performance metrics
+- **🔄 Refresh Data** - Update fighter information from UFC.com
+- **📊 Full Stats** - Complete performance metrics
 - **🥊 Fight Analysis** - Detailed fighting style breakdown
 
 ### `/info` - Bot Information

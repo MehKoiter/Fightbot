@@ -340,29 +340,36 @@ export default class UFCStatsFighterService {
      */
     async compareFighters(fighter1Name, fighter2Name) {
         try {
-            console.log(`🥊 UFC Stats: Comparing ${fighter1Name} vs ${fighter2Name}`);
+            console.log(`🥊 Comparing fighters: ${fighter1Name} vs ${fighter2Name}`);
 
+            // Get both fighter profiles
             const [fighter1Results, fighter2Results] = await Promise.all([
                 this.searchFighter(fighter1Name),
                 this.searchFighter(fighter2Name)
             ]);
 
-            const fighter1 = fighter1Results[0];
-            const fighter2 = fighter2Results[0];
+            const fighter1 = fighter1Results.length > 0 ? fighter1Results[0] : null;
+            const fighter2 = fighter2Results.length > 0 ? fighter2Results[0] : null;
 
             if (!fighter1 || !fighter2) {
-                console.log('❌ Could not find one or both fighters for comparison');
+                const missing = [];
+                if (!fighter1) missing.push(fighter1Name);
+                if (!fighter2) missing.push(fighter2Name);
+                console.log(`❌ Could not find fighter(s): ${missing.join(', ')}`);
                 return null;
             }
 
-            const comparison = {
+            console.log(`✅ Comparing: ${fighter1.name} vs ${fighter2.name}`);
+
+            return {
                 fighter1,
                 fighter2,
-                edges: this.calculateEdges(fighter1, fighter2),
-                comparedAt: new Date().toISOString()
+                comparison: {
+                    recordAdvantage: this.calculateRecordAdvantage(fighter1, fighter2),
+                    physicalAdvantage: this.calculatePhysicalAdvantage(fighter1, fighter2),
+                    experienceAdvantage: this.calculateExperienceAdvantage(fighter1, fighter2)
+                }
             };
-
-            return comparison;
 
         } catch (error) {
             console.error('❌ Error comparing fighters:', error.message);
@@ -371,43 +378,104 @@ export default class UFCStatsFighterService {
     }
 
     /**
-     * Calculate fighting edges between two fighters
-     * @param {Object} fighter1 - First fighter data
-     * @param {Object} fighter2 - Second fighter data
-     * @returns {Object} Calculated edges
+     * Calculate record advantage between two fighters
+     * @param {Object} fighter1 - First fighter
+     * @param {Object} fighter2 - Second fighter
+     * @returns {Object} Record advantage analysis
      */
-    calculateEdges(fighter1, fighter2) {
-        const edges = {};
+    calculateRecordAdvantage(fighter1, fighter2) {
+        const parseRecord = (record) => {
+            if (!record) return { wins: 0, losses: 0, draws: 0 };
+            const parts = record.split('-');
+            return {
+                wins: parseInt(parts[0]) || 0,
+                losses: parseInt(parts[1]) || 0,
+                draws: parseInt(parts[2]) || 0
+            };
+        };
 
-        // Height comparison
-        const height1 = this.parseHeight(fighter1.height);
-        const height2 = this.parseHeight(fighter2.height);
-        if (height1 && height2) {
-            edges.height = height1 > height2 ? fighter1.name : fighter2.name;
-        }
+        const f1Record = parseRecord(fighter1.record);
+        const f2Record = parseRecord(fighter2.record);
 
-        // Reach comparison
-        const reach1 = this.parseReach(fighter1.reach);
-        const reach2 = this.parseReach(fighter2.reach);
-        if (reach1 && reach2) {
-            edges.reach = reach1 > reach2 ? fighter1.name : fighter2.name;
-        }
+        const f1WinRate = f1Record.wins / (f1Record.wins + f1Record.losses) || 0;
+        const f2WinRate = f2Record.wins / (f2Record.wins + f2Record.losses) || 0;
 
-        // Experience comparison (based on total fights from record)
-        const record1 = this.parseRecord(fighter1.record);
-        const record2 = this.parseRecord(fighter2.record);
-        if (record1 && record2) {
-            const totalFights1 = record1.wins + record1.losses + record1.draws;
-            const totalFights2 = record2.wins + record2.losses + record2.draws;
-            edges.experience = totalFights1 > totalFights2 ? fighter1.name : fighter2.name;
-            
-            // Win percentage
-            const winRate1 = totalFights1 > 0 ? record1.wins / totalFights1 : 0;
-            const winRate2 = totalFights2 > 0 ? record2.wins / totalFights2 : 0;
-            edges.record = winRate1 > winRate2 ? fighter1.name : fighter2.name;
-        }
+        return {
+            fighter1: { ...f1Record, winRate: f1WinRate },
+            fighter2: { ...f2Record, winRate: f2WinRate },
+            advantage: f1WinRate > f2WinRate ? 'fighter1' : f2WinRate > f1WinRate ? 'fighter2' : 'equal'
+        };
+    }
 
-        return edges;
+    /**
+     * Calculate physical advantage between two fighters
+     * @param {Object} fighter1 - First fighter
+     * @param {Object} fighter2 - Second fighter
+     * @returns {Object} Physical advantage analysis
+     */
+    calculatePhysicalAdvantage(fighter1, fighter2) {
+        const parseHeight = (height) => {
+            if (!height) return 0;
+            const match = height.match(/(\d+)'(\d+)"/);
+            if (match) {
+                return parseInt(match[1]) * 12 + parseInt(match[2]);
+            }
+            return 0;
+        };
+
+        const parseReach = (reach) => {
+            if (!reach) return 0;
+            return parseFloat(reach.replace('"', '')) || 0;
+        };
+
+        const f1Height = parseHeight(fighter1.height);
+        const f2Height = parseHeight(fighter2.height);
+        const f1Reach = parseReach(fighter1.reach);
+        const f2Reach = parseReach(fighter2.reach);
+
+        return {
+            height: {
+                fighter1: f1Height,
+                fighter2: f2Height,
+                advantage: f1Height > f2Height ? 'fighter1' : f2Height > f1Height ? 'fighter2' : 'equal'
+            },
+            reach: {
+                fighter1: f1Reach,
+                fighter2: f2Reach,
+                advantage: f1Reach > f2Reach ? 'fighter1' : f2Reach > f1Reach ? 'fighter2' : 'equal'
+            }
+        };
+    }
+
+    /**
+     * Calculate experience advantage between two fighters
+     * @param {Object} fighter1 - First fighter
+     * @param {Object} fighter2 - Second fighter
+     * @returns {Object} Experience advantage analysis
+     */
+    calculateExperienceAdvantage(fighter1, fighter2) {
+        const getTotalFights = (record) => {
+            if (!record) return 0;
+            const parts = record.split('-');
+            return (parseInt(parts[0]) || 0) + (parseInt(parts[1]) || 0) + (parseInt(parts[2]) || 0);
+        };
+
+        const f1Total = getTotalFights(fighter1.record);
+        const f2Total = getTotalFights(fighter2.record);
+
+        return {
+            fighter1: f1Total,
+            fighter2: f2Total,
+            advantage: f1Total > f2Total ? 'fighter1' : f2Total > f1Total ? 'fighter2' : 'equal'
+        };
+    }
+
+    /**
+     * Clear all cached data
+     */
+    clearCache() {
+        console.log('🧹 Clearing UFC fighter service cache');
+        this.cache.clear();
     }
 
     /**
