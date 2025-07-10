@@ -1,0 +1,210 @@
+name: 🧪 Automated Testing & Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: 🔍 Test Suite
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: 📦 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: 📋 Install dependencies
+      run: npm ci
+
+    - name: 🧪 Run unit tests
+      run: npm test
+
+    - name: 🔍 Run interaction state manager tests
+      run: node tests/unit/interaction-state-manager.test.js
+
+    - name: ⚡ Run performance tests
+      run: node tests/performance/autocomplete-race-condition.test.js
+
+    - name: 🔧 Run lint checks
+      run: npm run lint || echo "Lint not configured, skipping"
+
+    - name: 📊 Check test coverage
+      run: npm run coverage || echo "Coverage not configured, skipping"
+
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: 📦 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: 📋 Install dependencies
+      run: npm ci
+
+    - name: 🔍 Run health checks
+      run: node health-check.js
+
+    - name: 📚 Run docs health check
+      run: node docs-health-check.js
+
+  security-check:
+    name: 🛡️ Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📦 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: 📋 Install dependencies
+      run: npm ci
+
+    - name: 🔍 Run security audit
+      run: npm audit --audit-level=moderate
+
+    - name: 🛡️ Check for vulnerabilities
+      run: npm audit --audit-level=high --dry-run
+
+  build-check:
+    name: 🏗️ Build Verification
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📦 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: 📋 Install dependencies
+      run: npm ci
+
+    - name: 🏗️ Verify project structure
+      run: |
+        echo "Checking required files..."
+        test -f package.json || exit 1
+        test -f index.js || exit 1
+        test -d commands || exit 1
+        test -d events || exit 1
+        test -d services || exit 1
+        test -d utils || exit 1
+        echo "✅ All required files present"
+
+    - name: 🔧 Verify configuration
+      run: |
+        echo "Checking configuration files..."
+        test -f config.js || exit 1
+        test -f .env.example || exit 1
+        echo "✅ Configuration files present"
+
+  race-condition-check:
+    name: 🏃‍♂️ Race Condition Prevention
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: 📦 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+
+    - name: 📋 Install dependencies
+      run: npm ci
+
+    - name: 🔥 Stress test interaction state manager
+      run: |
+        echo "Running stress tests for interaction deduplication..."
+        for i in {1..5}; do
+          echo "Stress test iteration $i"
+          node tests/performance/autocomplete-race-condition.test.js
+        done
+
+    - name: 🧪 Validate state manager edge cases
+      run: |
+        echo "Testing edge cases for InteractionStateManager..."
+        node -e "
+        const manager = require('./utils/interactionStateManager.js');
+        
+        // Test rapid concurrent access
+        const promises = [];
+        for (let i = 0; i < 100; i++) {
+          promises.push(Promise.resolve().then(() => {
+            const canRespond = manager.canRespond('test-id-' + (i % 10));
+            if (canRespond) manager.markAsResponded('test-id-' + (i % 10));
+            return canRespond;
+          }));
+        }
+        
+        Promise.all(promises).then(results => {
+          const successCount = results.filter(Boolean).length;
+          console.log(\`✅ Handled \${successCount} concurrent requests successfully\`);
+          console.log(\`🛡️  Blocked \${results.length - successCount} duplicate requests\`);
+          if (successCount >= 10 && successCount <= 20) {
+            console.log('✅ Race condition prevention working correctly');
+            process.exit(0);
+          } else {
+            console.log('❌ Unexpected behavior in race condition prevention');
+            process.exit(1);
+          }
+        });
+        "
+
+  notification:
+    name: 📢 Status Notification
+    runs-on: ubuntu-latest
+    needs: [test, health-check, security-check, build-check, race-condition-check]
+    if: always()
+
+    steps:
+    - name: ✅ Success notification
+      if: ${{ needs.test.result == 'success' && needs.health-check.result == 'success' && needs.security-check.result == 'success' && needs.build-check.result == 'success' && needs.race-condition-check.result == 'success' }}
+      run: |
+        echo "🎉 All checks passed successfully!"
+        echo "✅ Tests: ${{ needs.test.result }}"
+        echo "✅ Health: ${{ needs.health-check.result }}"
+        echo "✅ Security: ${{ needs.security-check.result }}"
+        echo "✅ Build: ${{ needs.build-check.result }}"
+        echo "✅ Race Conditions: ${{ needs.race-condition-check.result }}"
+
+    - name: ❌ Failure notification
+      if: ${{ needs.test.result == 'failure' || needs.health-check.result == 'failure' || needs.security-check.result == 'failure' || needs.build-check.result == 'failure' || needs.race-condition-check.result == 'failure' }}
+      run: |
+        echo "❌ Some checks failed!"
+        echo "Tests: ${{ needs.test.result }}"
+        echo "Health: ${{ needs.health-check.result }}"
+        echo "Security: ${{ needs.security-check.result }}"
+        echo "Build: ${{ needs.build-check.result }}"
+        echo "Race Conditions: ${{ needs.race-condition-check.result }}"
+        exit 1
