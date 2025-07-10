@@ -1,12 +1,20 @@
 /**
- * Fighter Command - Advanced Fighter Profiles and Stats
- * Phase 7: Advanced Fighter Features
+ * Fighter Command - Streamlined SportsData.io Integration
+ * Version 4.2: Optimized Professional Fighter Profiles
  * 
- * Provides detailed fighter information, stats, and interactive features
+ * Features:
+ * - Professional fighter profiles from SportsData.io API
+ * - Real-time fight statistics and career analytics
+ * - Advanced fighter comparisons with detailed analysis
+ * - Interactive profile navigation with rich embeds
+ * - Intelligent autocomplete with SportsData.io fighters
+ * - Enhanced error handling and performance optimization
+ * - Memory-efficient caching and response optimization
+ * - Clean, maintainable codebase with single API source
  */
 
 import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import UFCStatsFighterService from "../services/ufcStatsFighterService.js";
+import SportsDataMMAService from "../services/sportsDataMMAService.js";
 import interactionStateManager from "../utils/interactionStateManager.js";
 
 export default {
@@ -25,124 +33,118 @@ export default {
                 .setAutocomplete(true)),
 
     /**
-     * Handle autocomplete for fighter names
+     * Handle autocomplete for fighter names with enhanced safety and performance
      */
     async autocomplete(interaction) {
-        // Use interaction state manager for additional safety
-        const isSafeToRespond = () => {
-            return interactionStateManager.isSafeToRespond(interaction);
-        };
-
-        // Exit immediately if interaction is invalid
-        if (!isSafeToRespond()) {
-            console.log('⚠️ Autocomplete interaction not safe to respond - exiting early');
+        // Early validation
+        if (!interactionStateManager.isSafeToRespond(interaction)) {
+            console.log('⚠️ Autocomplete interaction not safe - exiting early');
             return;
         }
 
         try {
-            const focusedValue = interaction.options.getFocused();
+            const focusedValue = interaction.options.getFocused()?.trim();
             
-            // Return empty if no input or too short
+            // Enhanced input validation
             if (!focusedValue || focusedValue.length < 2) {
-                // Double-check interaction state right before responding
-                if (isSafeToRespond()) {
-                    try {
-                        await interaction.respond([]);
-                        console.log('✅ Responded with empty autocomplete (short input)');
-                    } catch (respondError) {
-                        console.log('⚠️ Failed to respond to short input (interaction already handled)');
-                    }
-                }
+                await this.safeRespond(interaction, []);
                 return;
             }
 
-            // Create a race between autocomplete and timeout with shorter timeout
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Autocomplete timeout')), 1500) // Reduced to 1.5 seconds
-            );
+            // Optimized autocomplete with shorter timeout and better error handling
+            const suggestions = await Promise.race([
+                this.getAutocompleteSuggestions(focusedValue),
+                this.createTimeoutPromise(1200) // Reduced timeout for better UX
+            ]);
             
-            const autocompletePromise = (async () => {
-                const ufcStatsService = new UFCStatsFighterService();
-                const suggestions = await ufcStatsService.getAutocompleteSuggestions(focusedValue);
-                
-                // Ensure we return valid format
-                if (!Array.isArray(suggestions)) {
-                    console.log('⚠️ UFC service returned non-array suggestions');
-                    return [];
-                }
-                
-                return suggestions.slice(0, 25); // Discord autocomplete limit
-            })();
-
-            // Race against timeout
-            let suggestions;
-            try {
-                suggestions = await Promise.race([autocompletePromise, timeoutPromise]);
-            } catch (timeoutError) {
-                console.log('⚠️ Autocomplete for fighter is taking too long...');
-                suggestions = []; // Use empty suggestions on timeout
-            }
-            
-            // Final safety check before responding - check interaction state right before the call
-            if (isSafeToRespond()) {
-                try {
-                    await interaction.respond(Array.isArray(suggestions) ? suggestions : []);
-                    console.log(`✅ Responded with ${suggestions.length} autocomplete suggestions`);
-                } catch (respondError) {
-                    console.log('⚠️ Failed to respond with suggestions (interaction state changed during processing)');
-                }
-            } else {
-                console.log('⚠️ Interaction state changed during processing - skipping response');
-            }
+            await this.safeRespond(interaction, suggestions);
             
         } catch (error) {
-            console.error('Fighter autocomplete error:', error);
-            
-            // Don't try to respond in the catch block - too risky for race conditions
-            // Let the interactionCreate.js error handler deal with it if needed
-            console.error('❌ Error in fighter autocomplete, letting global handler manage response');
+            console.error('Fighter autocomplete error:', error.message);
+            // Fail silently to avoid Discord interaction issues
         }
     },
 
     /**
-     * Execute the fighter command
+     * Get autocomplete suggestions with optimized performance
+     */
+    async getAutocompleteSuggestions(query) {
+        const sportsDataService = new SportsDataMMAService();
+        const suggestions = await sportsDataService.searchFighters(query);
+        
+        if (!Array.isArray(suggestions)) {
+            console.log('⚠️ SportsData service returned non-array suggestions');
+            return [];
+        }
+        
+        // Optimized mapping with better performance
+        return suggestions
+            .map(fighter => ({
+                name: `${fighter.DisplayName}${fighter.Nickname ? ` "${fighter.Nickname}"` : ''}`,
+                value: fighter.DisplayName || `${fighter.FirstName} ${fighter.LastName}`
+            }))
+            .slice(0, 25); // Discord limit
+    },
+
+    /**
+     * Create timeout promise helper
+     */
+    createTimeoutPromise(ms) {
+        return new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Autocomplete timeout')), ms)
+        );
+    },
+
+    /**
+     * Safely respond to autocomplete with enhanced error handling
+     */
+    async safeRespond(interaction, suggestions) {
+        if (!interactionStateManager.isSafeToRespond(interaction)) {
+            return;
+        }
+
+        try {
+            await interaction.respond(Array.isArray(suggestions) ? suggestions : []);
+            console.log(`✅ Autocomplete: ${suggestions.length} suggestions sent`);
+        } catch (error) {
+            console.log('⚠️ Autocomplete response failed - interaction handled elsewhere');
+        }
+    },
+
+    /**
+     * Execute the fighter command with optimized performance
      */
     async execute(interaction) {
         const fighterName = interaction.options.getString('name');
         const compareFighter = interaction.options.getString('compare');
         
         try {
-            const ufcStatsService = new UFCStatsFighterService();
-            
-            // For faster response, try without defer first for simple cases
+            const sportsDataService = new SportsDataMMAService();
             let hasDeferred = false;
             
-            // Helper function to safely defer if not already done
+            // Optimized defer helper
             const safeDeferReply = async () => {
                 if (!hasDeferred && !interaction.replied && !interaction.deferred) {
                     try {
-                        // Add a small delay to avoid conflicts with autocomplete
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        await new Promise(resolve => setTimeout(resolve, 50)); // Reduced delay
                         
-                        // Double-check interaction state after delay
                         if (!interaction.replied && !interaction.deferred) {
                             await interaction.deferReply();
                             hasDeferred = true;
                         }
                     } catch (error) {
-                        console.error('Failed to defer reply:', error);
+                        console.error('Failed to defer reply:', error.message);
                         
-                        // Check if the error is due to interaction already being handled
                         if (error.code === 40060 || error.code === 10062) {
-                            console.log('Interaction was already handled - continuing without defer');
-                            return; // Don't throw, just continue
+                            console.log('Interaction already handled - continuing without defer');
+                            return;
                         }
                         throw error;
                     }
                 }
             };
             
-            // Helper function to safely respond
+            // Optimized response helper
             const safeResponse = async (responseData) => {
                 try {
                     if (hasDeferred || interaction.deferred) {
@@ -151,71 +153,91 @@ export default {
                         await interaction.reply(responseData);
                     }
                 } catch (error) {
-                    console.error('Failed to send response:', error);
+                    console.error('Failed to send response:', error.message);
                     throw error;
                 }
             };
 
-            // If comparison requested - this might take longer, so defer immediately
+            // Handle comparison requests
             if (compareFighter) {
                 await safeDeferReply();
-                
-                const comparison = await ufcStatsService.compareFighters(fighterName, compareFighter);
-                
-                if (!comparison) {
-                    const errorEmbed = new EmbedBuilder()
-                        .setColor('#ff0000')
-                        .setTitle('❌ Fighter Comparison Failed')
-                        .setDescription(`Could not find detailed information for "${fighterName}" or "${compareFighter}".`)
-                        .addFields(
-                            { name: '💡 Tips', value: '• Check spelling\n• Try using full names\n• Use autocomplete suggestions', inline: false }
-                        )
-                        .setTimestamp();
-
-                    await safeResponse({ embeds: [errorEmbed] });
-                    return;
-                }
-
-                // Create comparison embed
-                const comparisonEmbed = await this.createComparisonEmbed(comparison);
-                const comparisonButtons = this.createComparisonButtons(fighterName, compareFighter);
-
-                await safeResponse({ 
-                    embeds: [comparisonEmbed], 
-                    components: [comparisonButtons] 
-                });
-                return;
+                return await this.handleComparison(sportsDataService, fighterName, compareFighter, safeResponse);
             }
 
-            // Single fighter profile - try fast response first
-            let fighter;
-            try {
-                // Quick attempt without defer (for cached data)
-                fighter = await Promise.race([
-                    ufcStatsService.getFighterProfile(fighterName),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2500))
-                ]);
-            } catch (timeoutError) {
-                // If it takes too long, defer and try again
-                await safeDeferReply();
-                fighter = await ufcStatsService.getFighterProfile(fighterName);
-            }
+            // Handle single fighter profile with optimized flow
+            await this.handleSingleFighter(sportsDataService, fighterName, safeDeferReply, safeResponse);
 
-            if (!fighter) {
-                const errorEmbed = new EmbedBuilder()
-                    .setColor('#ff0000')
-                    .setTitle('❌ Fighter Not Found')
-                    .setDescription(`Could not find a fighter named "${fighterName}".`)
-                    .addFields(
-                        { name: '💡 Suggestions', value: '• Check the spelling\n• Try using the fighter\'s full name\n• Use the autocomplete feature', inline: false }
-                    )
-                    .setTimestamp();
+        } catch (error) {
+            console.error('Fighter command error:', error.message);
+            await this.handleCommandError(interaction, error);
+        }
+    },
 
+    /**
+     * Handle fighter comparison with optimized error handling
+     */
+    async handleComparison(sportsDataService, fighterName, compareFighter, safeResponse) {
+        try {
+            const comparison = await sportsDataService.compareFighters(fighterName, compareFighter);
+            
+            if (!comparison) {
+                const errorEmbed = this.createErrorEmbed(
+                    '❌ Fighter Comparison Failed',
+                    `Could not find detailed information for "${fighterName}" or "${compareFighter}".`,
+                    '• Check spelling\n• Try using full names\n• Use autocomplete suggestions'
+                );
                 await safeResponse({ embeds: [errorEmbed] });
                 return;
             }
 
-            // Create fighter profile embed
+            const comparisonEmbed = await this.createComparisonEmbed(comparison.fighter1, comparison.fighter2);
+            const comparisonButtons = this.createComparisonButtons(fighterName, compareFighter);
+
+            await safeResponse({ 
+                embeds: [comparisonEmbed], 
+                components: [comparisonButtons] 
+            });
+        } catch (error) {
+            console.error('Comparison handling error:', error.message);
+            throw error;
+        }
+    },
+
+    /**
+     * Handle single fighter profile with performance optimization
+     */
+    async handleSingleFighter(sportsDataService, fighterName, safeDeferReply, safeResponse) {
+        let fighter;
+        
+        try {
+            // Optimized fighter search and profile retrieval
+            const searchResults = await sportsDataService.searchFighters(fighterName);
+            if (!searchResults?.length) {
+                throw new Error('Fighter not found in search');
+            }
+            
+            // Try fast response first, fallback to deferred if needed
+            try {
+                fighter = await Promise.race([
+                    sportsDataService.getFighterProfile(searchResults[0].FighterId),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+                ]);
+            } catch (timeoutError) {
+                await safeDeferReply();
+                fighter = await sportsDataService.getFighterProfile(searchResults[0].FighterId);
+            }
+
+            if (!fighter) {
+                const errorEmbed = this.createErrorEmbed(
+                    '❌ Fighter Not Found',
+                    `Could not find a fighter named "${fighterName}".`,
+                    '• Check the spelling\n• Try using the fighter\'s full name\n• Use the autocomplete feature'
+                );
+                await safeResponse({ embeds: [errorEmbed] });
+                return;
+            }
+
+            // Create and send fighter profile
             const profileEmbed = await this.createFighterEmbed(fighter);
             const actionButtons = this.createActionButtons(fighterName);
 
@@ -225,134 +247,168 @@ export default {
             });
 
         } catch (error) {
-            console.error('Fighter command error:', error);
-            
-            const errorEmbed = new EmbedBuilder()
-                .setColor('#ff0000')
-                .setTitle('❌ Command Error')
-                .setDescription('An error occurred while fetching fighter information.')
-                .addFields(
-                    { name: '🔧 Troubleshooting', value: '• Try again in a moment\n• Check your internet connection\n• Contact support if this persists', inline: false }
-                )
-                .setTimestamp();
-
-            // Enhanced error handling to prevent "interaction already acknowledged" errors
-            try {
-                if (interaction.deferred) {
-                    await interaction.editReply({ embeds: [errorEmbed] });
-                } else if (!interaction.replied) {
-                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
-                }
-            } catch (replyError) {
-                console.error('❌ Error executing fighter: Interaction has already been acknowledged.');
-                console.error('Failed to send error response:', replyError.message);
-            }
+            console.error('Single fighter handling error:', error.message);
+            throw error;
         }
     },
 
     /**
-     * Create detailed fighter profile embed
+     * Handle command errors with improved user feedback
+     */
+    async handleCommandError(interaction, error) {
+        const errorEmbed = this.createErrorEmbed(
+            '❌ Command Error',
+            'An error occurred while fetching fighter information.',
+            '• Try again in a moment\n• Check your internet connection\n• Contact support if this persists'
+        );
+
+        try {
+            if (interaction.deferred) {
+                await interaction.editReply({ embeds: [errorEmbed] });
+            } else if (!interaction.replied) {
+                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            }
+        } catch (replyError) {
+            console.error('❌ Failed to send error response:', replyError.message);
+        }
+    },
+
+    /**
+     * Create standardized error embed
+     */
+    createErrorEmbed(title, description, tips) {
+        return new EmbedBuilder()
+            .setColor('#ff0000')
+            .setTitle(title)
+            .setDescription(description)
+            .addFields({
+                name: '💡 Tips',
+                value: tips,
+                inline: false
+            })
+            .setTimestamp();
+    },
+
+    /**
+     * Create detailed fighter profile embed with optimized data handling
      */
     async createFighterEmbed(fighter) {
+        // Helper function for safe data extraction
+        const safeGet = (value, fallback = 'N/A') => value || fallback;
+        const safeName = fighter.DisplayName || `${fighter.FirstName} ${fighter.LastName}`;
+        
+        // Calculate stats efficiently
+        const wins = fighter.Wins || 0;
+        const losses = fighter.Losses || 0;
+        const draws = fighter.Draws || 0;
+        const winRate = wins && losses ? ((wins / (wins + losses)) * 100).toFixed(1) : '0';
+
         const embed = new EmbedBuilder()
             .setColor('#ff0000')
-            .setTitle(`🥊 ${fighter.name}${fighter.nickname ? ` "${fighter.nickname}"` : ''}`)
-            .setDescription(`**Professional Mixed Martial Artist**`)
+            .setTitle(`🥊 ${safeName}${fighter.Nickname ? ` "${fighter.Nickname}"` : ''}`)
+            .setDescription('**Professional Mixed Martial Artist**')
             .addFields(
                 {
                     name: '📊 Fight Record',
-                    value: `**${fighter.record}**\n` +
-                           `Wins: ${fighter.wins} | Losses: ${fighter.losses} | Draws: ${fighter.draws}\n` +
-                           `Win Rate: ${((fighter.wins / (fighter.wins + fighter.losses)) * 100).toFixed(1)}%`,
+                    value: `**${wins}-${losses}-${draws}**\n` +
+                           `Wins: ${wins} | Losses: ${losses} | Draws: ${draws}\n` +
+                           `Win Rate: ${winRate}%`,
                     inline: true
                 },
                 {
                     name: '📏 Physical Stats',
-                    value: `**Height:** ${fighter.height}\n` +
-                           `**Weight:** ${fighter.weight}\n` +
-                           `**Reach:** ${fighter.reach}\n` +
-                           `**Stance:** ${fighter.stance}`,
+                    value: `**Height:** ${safeGet(fighter.Height)}\n` +
+                           `**Weight:** ${safeGet(fighter.Weight)}\n` +
+                           `**Reach:** ${safeGet(fighter.Reach)}\n` +
+                           `**Stance:** ${safeGet(fighter.Stance)}`,
                     inline: true
                 },
                 {
-                    name: '🏟️ Division & Status',
-                    value: `**Division:** ${fighter.weightClass}\n` +
-                           `**Team:** ${fighter.team}\n` +
-                           `**Status:** ${fighter.currentChampion ? 'Current Champion' : fighter.formerChampion ? 'Former Champion' : 'Contender'}`,
+                    name: '🏟️ Fighter Info',
+                    value: `**Division:** ${safeGet(fighter.WeightClass)}\n` +
+                           `**Born:** ${fighter.BirthDate ? new Date(fighter.BirthDate).toLocaleDateString() : 'N/A'}\n` +
+                           `**Nationality:** ${safeGet(fighter.Nationality)}\n` +
+                           `**Team:** ${safeGet(fighter.Team)}`,
                     inline: true
-                },
-                {
-                    name: '🏆 Achievements',
-                    value: (fighter.achievements && fighter.achievements.length > 0) 
-                        ? fighter.achievements.slice(0, 3).join('\n') 
-                        : 'Professional Fighter',
-                    inline: false
                 }
             );
 
-        if (fighter.recentFights && fighter.recentFights.length > 0) {
-            const lastFight = fighter.recentFights[0];
+        // Add championship info if available
+        if (fighter.TitleWins > 0) {
             embed.addFields({
-                name: '⚔️ Last Fight',
-                value: `vs **${lastFight.opponent}** - ${lastFight.result}\n` +
-                       `${lastFight.method} (Round ${lastFight.round}, ${lastFight.time})\n` +
-                       `${lastFight.event} | ${lastFight.date}`,
+                name: '🏆 Championships',
+                value: `Title Wins: ${fighter.TitleWins}\nTitle Losses: ${fighter.TitleLosses}\nTitle Draws: ${fighter.TitleDraws}`,
                 inline: false
             });
         }
 
-        embed.setTimestamp()
-             .setFooter({ text: 'FightBot • UFC Stats Fighter Profiles' });
+        // Add photo if available
+        if (fighter.PhotoUrl) {
+            embed.setThumbnail(fighter.PhotoUrl);
+        }
 
-        return embed;
+        return embed
+            .setTimestamp()
+            .setFooter({ text: 'FightBot • SportsData.io Professional Fighter Profiles' });
     },
 
     /**
-     * Create comparison embed for two fighters
+     * Create comparison embed for two fighters with enhanced analytics
      */
-    async createComparisonEmbed(comparison) {
-        const { fighter1, fighter2, comparison: comp } = comparison;
+    async createComparisonEmbed(fighter1, fighter2) {
+        // Helper for safe calculations
+        const calcWinRate = (fighter) => {
+            const wins = fighter.Wins || 0;
+            const losses = fighter.Losses || 0;
+            return wins && losses ? ((wins / (wins + losses)) * 100).toFixed(1) : '0';
+        };
 
-        // Safely extract data with fallbacks
-        const f1Record = `${fighter1.wins || 0}-${fighter1.losses || 0}-${fighter1.draws || 0}`;
-        const f2Record = `${fighter2.wins || 0}-${fighter2.losses || 0}-${fighter2.draws || 0}`;
+        const f1Record = `${fighter1.Wins || 0}-${fighter1.Losses || 0}-${fighter1.Draws || 0}`;
+        const f2Record = `${fighter2.Wins || 0}-${fighter2.Losses || 0}-${fighter2.Draws || 0}`;
+        const f1WinRate = calcWinRate(fighter1);
+        const f2WinRate = calcWinRate(fighter2);
 
-        const embed = new EmbedBuilder()
+        // Enhanced analytics
+        const f1Experience = (fighter1.Wins || 0) + (fighter1.Losses || 0) + (fighter1.Draws || 0);
+        const f2Experience = (fighter2.Wins || 0) + (fighter2.Losses || 0) + (fighter2.Draws || 0);
+        const experienceEdge = f1Experience > f2Experience ? fighter1.DisplayName : 
+                              f2Experience > f1Experience ? fighter2.DisplayName : 'Even';
+        const recordEdge = f1WinRate > f2WinRate ? fighter1.DisplayName : 
+                          f2WinRate > f1WinRate ? fighter2.DisplayName : 'Even';
+
+        return new EmbedBuilder()
             .setColor('#ff6600')
-            .setTitle(`⚔️ Fighter Comparison`)
-            .setDescription(`**${fighter1.name}** vs **${fighter2.name}**`)
+            .setTitle('⚔️ Fighter Comparison')
+            .setDescription(`**${fighter1.DisplayName}** vs **${fighter2.DisplayName}**`)
             .addFields(
                 {
-                    name: `🥊 ${fighter1.name}`,
-                    value: `**Record:** ${f1Record}\n` +
-                           `**Height:** ${fighter1.height || 'N/A'}\n` +
-                           `**Weight:** ${fighter1.weight || 'N/A'}\n` +
-                           `**Reach:** ${fighter1.reach || 'N/A'}\n` +
-                           `**Team:** ${fighter1.team || 'N/A'}`,
+                    name: `🥊 ${fighter1.DisplayName}`,
+                    value: `**Record:** ${f1Record} (${f1WinRate}% win rate)\n` +
+                           `**Height:** ${fighter1.Height || 'N/A'}\n` +
+                           `**Weight:** ${fighter1.Weight || 'N/A'}\n` +
+                           `**Reach:** ${fighter1.Reach || 'N/A'}\n` +
+                           `**Division:** ${fighter1.WeightClass || 'N/A'}`,
                     inline: true
                 },
                 {
-                    name: `🥊 ${fighter2.name}`,
-                    value: `**Record:** ${f2Record}\n` +
-                           `**Height:** ${fighter2.height || 'N/A'}\n` +
-                           `**Weight:** ${fighter2.weight || 'N/A'}\n` +
-                           `**Reach:** ${fighter2.reach || 'N/A'}\n` +
-                           `**Team:** ${fighter2.team || 'N/A'}`,
+                    name: `🥊 ${fighter2.DisplayName}`,
+                    value: `**Record:** ${f2Record} (${f2WinRate}% win rate)\n` +
+                           `**Height:** ${fighter2.Height || 'N/A'}\n` +
+                           `**Weight:** ${fighter2.Weight || 'N/A'}\n` +
+                           `**Reach:** ${fighter2.Reach || 'N/A'}\n` +
+                           `**Division:** ${fighter2.WeightClass || 'N/A'}`,
                     inline: true
                 },
                 {
                     name: '⚖️ Analysis',
-                    value: `**Experience Edge:** ${comp.experienceEdge}\n` +
-                           `**Height Edge:** ${comp.heightEdge}\n` +
-                           `**Reach Edge:** ${comp.reachEdge}\n` +
-                           `**Record Edge:** ${comp.recordEdge}`,
+                    value: `**Experience Edge:** ${experienceEdge}\n` +
+                           `**Record Edge:** ${recordEdge}\n` +
+                           `**Title Wins:** ${fighter1.TitleWins || 0} vs ${fighter2.TitleWins || 0}`,
                     inline: false
                 }
             )
             .setTimestamp()
-            .setFooter({ text: 'FightBot • Fighter Comparison Tool' });
-
-        return embed;
+            .setFooter({ text: 'FightBot • SportsData.io Fighter Comparison' });
     },
 
     /**
