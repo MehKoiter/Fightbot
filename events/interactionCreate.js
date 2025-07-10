@@ -1,5 +1,6 @@
 import { Events, EmbedBuilder } from 'discord.js';
 import FighterInteractionHandler from '../services/fighterInteractionHandler.js';
+import interactionStateManager from '../utils/interactionStateManager.js';
 
 // Initialize fighter interaction handler
 const fighterHandler = new FighterInteractionHandler();
@@ -77,10 +78,17 @@ export default {
 		// Handle autocomplete interactions
 		if (interaction.isAutocomplete()) {
 			try {
+				// Check if this interaction is already being processed
+				if (!interactionStateManager.markAsProcessing(interaction)) {
+					console.log('⚠️ Autocomplete interaction already being processed - skipping');
+					return;
+				}
+
 				const command = interaction.client.commands.get(interaction.commandName);
 				
 				if (!command) {
 					console.error(`❌ No command matching ${interaction.commandName} was found for autocomplete.`);
+					interactionStateManager.markAsCompleted(interaction);
 					return;
 				}
 
@@ -92,18 +100,27 @@ export default {
 					
 					await command.autocomplete(interaction);
 					clearTimeout(autocompleteTimeout);
+					interactionStateManager.markAsCompleted(interaction);
 				}
 			} catch (error) {
 				console.error(`❌ Error handling autocomplete for ${interaction.commandName}:`, error.message);
 				
-				// Try to send empty response if we haven't responded yet
-				try {
-					if (!interaction.responded) {
+				// Mark as completed even on error
+				interactionStateManager.markAsCompleted(interaction);
+				
+				// Only try to respond if it's NOT an acknowledgment error and we haven't responded
+				if (!error.message.includes('already been acknowledged') && 
+					!error.message.includes('Unknown interaction') &&
+					interactionStateManager.isSafeToRespond(interaction)) {
+					try {
 						await interaction.respond([]);
+						console.log('✅ Global handler sent empty autocomplete response');
+					} catch (responseError) {
+						// Don't log this as an error since it's expected in race conditions
+						console.log('⚠️ Global handler could not send empty response (interaction handled elsewhere)');
 					}
-				} catch (responseError) {
-					// Autocomplete failures are not critical - just log them
-					console.error('Failed to send empty autocomplete response:', responseError.message);
+				} else {
+					console.log('⚠️ Global handler skipping response (interaction already handled or acknowledgment error)');
 				}
 			}
 		}

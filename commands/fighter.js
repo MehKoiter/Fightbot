@@ -7,6 +7,7 @@
 
 import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import UFCStatsFighterService from "../services/ufcStatsFighterService.js";
+import interactionStateManager from "../utils/interactionStateManager.js";
 
 export default {
     data: new SlashCommandBuilder()
@@ -27,9 +28,14 @@ export default {
      * Handle autocomplete for fighter names
      */
     async autocomplete(interaction) {
-        // Immediately check if interaction is already acknowledged
-        if (interaction.responded || interaction.deferred) {
-            console.log('⚠️ Autocomplete interaction already acknowledged');
+        // Use interaction state manager for additional safety
+        const isSafeToRespond = () => {
+            return interactionStateManager.isSafeToRespond(interaction);
+        };
+
+        // Exit immediately if interaction is invalid
+        if (!isSafeToRespond()) {
+            console.log('⚠️ Autocomplete interaction not safe to respond - exiting early');
             return;
         }
 
@@ -38,8 +44,14 @@ export default {
             
             // Return empty if no input or too short
             if (!focusedValue || focusedValue.length < 2) {
-                if (!interaction.responded) {
-                    await interaction.respond([]);
+                // Double-check interaction state right before responding
+                if (isSafeToRespond()) {
+                    try {
+                        await interaction.respond([]);
+                        console.log('✅ Responded with empty autocomplete (short input)');
+                    } catch (respondError) {
+                        console.log('⚠️ Failed to respond to short input (interaction already handled)');
+                    }
                 }
                 return;
             }
@@ -71,10 +83,14 @@ export default {
                 suggestions = []; // Use empty suggestions on timeout
             }
             
-            // Final safety check before responding
-            if (!interaction.responded && !interaction.deferred) {
-                await interaction.respond(Array.isArray(suggestions) ? suggestions : []);
-                console.log(`✅ Responded with ${suggestions.length} autocomplete suggestions`);
+            // Final safety check before responding - check interaction state right before the call
+            if (isSafeToRespond()) {
+                try {
+                    await interaction.respond(Array.isArray(suggestions) ? suggestions : []);
+                    console.log(`✅ Responded with ${suggestions.length} autocomplete suggestions`);
+                } catch (respondError) {
+                    console.log('⚠️ Failed to respond with suggestions (interaction state changed during processing)');
+                }
             } else {
                 console.log('⚠️ Interaction state changed during processing - skipping response');
             }
@@ -82,19 +98,9 @@ export default {
         } catch (error) {
             console.error('Fighter autocomplete error:', error);
             
-            // Only try to respond if we haven't already and it's not an acknowledgment error
-            if (!interaction.responded && 
-                !interaction.deferred && 
-                !error.message.includes('already been acknowledged') &&
-                !error.message.includes('Unknown interaction')) {
-                try {
-                    await interaction.respond([]);
-                } catch (responseError) {
-                    console.error('❌ Error handling autocomplete for fighter:', responseError.message);
-                }
-            } else {
-                console.error('❌ Error handling autocomplete for fighter:', error.message);
-            }
+            // Don't try to respond in the catch block - too risky for race conditions
+            // Let the interactionCreate.js error handler deal with it if needed
+            console.error('❌ Error in fighter autocomplete, letting global handler manage response');
         }
     },
 
