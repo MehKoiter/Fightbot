@@ -148,8 +148,11 @@ export default class WikipediaUFCService {
         try {
             const $ = cheerio.load(html);
             
+            // Clean HTML tags from title
+            const cleanTitle = title ? title.replace(/<[^>]*>/g, '').trim() : `UFC ${eventNumber}`;
+            
             const eventData = {
-                title: title || `UFC ${eventNumber}`,
+                title: cleanTitle,
                 eventNumber: eventNumber,
                 source: 'Wikipedia'
             };

@@ -1,16 +1,16 @@
 /**
  * Fighter Button Interaction Handler
- * Updated January 2025: Real-time UFC.com Scraping
+ * Phase 7: Advanced Fighter Features
  * 
  * Handles button interactions for fighter profiles and comparisons
  */
 
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import UFCStatsFighterService from "./ufcStatsFighterService.js";
+import FighterService from "../services/fighterService.js";
 
 export default class FighterInteractionHandler {
     constructor() {
-        this.fighterService = new UFCStatsFighterService();
+        this.fighterService = new FighterService();
     }
 
     /**
@@ -29,6 +29,8 @@ export default class FighterInteractionHandler {
                 await this.handleComparePrompt(interaction);
             } else if (customId.startsWith('fighter_refresh_')) {
                 await this.handleRefreshProfile(interaction);
+            } else if (customId.startsWith('fighter_back_')) {
+                await this.handleBackToProfile(interaction);
             } else if (customId.startsWith('comparison_detailed_')) {
                 await this.handleDetailedComparison(interaction);
             } else if (customId.startsWith('comparison_styles_')) {
@@ -486,5 +488,28 @@ export default class FighterInteractionHandler {
         } else {
             return 'Decision';
         }
+    }
+
+    /**
+     * Handle back to profile button
+     */
+    async handleBackToProfile(interaction) {
+        const fighterName = interaction.customId.replace('fighter_back_', '');
+        
+        // For now, send a simple "back to profile" message
+        // This could be enhanced to actually reload the full fighter profile
+        const backEmbed = new EmbedBuilder()
+            .setColor('#00ff00')
+            .setTitle('← Back to Profile')
+            .setDescription(`Returning to ${fighterName}'s fighter profile...`)
+            .addFields({
+                name: '💡 Tip',
+                value: 'Use `/fighter` command to view the full profile again.',
+                inline: false
+            })
+            .setTimestamp()
+            .setFooter({ text: 'FightBot • All Features FREE Forever!' });
+
+        await interaction.reply({ embeds: [backEmbed], ephemeral: true });
     }
 }

@@ -199,7 +199,19 @@ export default {
             eventEmbed.setFooter({ 
                 text: `${VERSION_CONFIG.BOT_NAME} v${VERSION_CONFIG.VERSION} • Data from ${dataSource}` 
             });
-            eventEmbed.setTimestamp();
+            
+            // Use event date for timestamp if available, otherwise current time
+            const timestampDate = event.dateTime || event.DateTime || event.date;
+            if (timestampDate) {
+                const parsedDate = new Date(timestampDate);
+                if (!isNaN(parsedDate.getTime())) {
+                    eventEmbed.setTimestamp(parsedDate);
+                } else {
+                    eventEmbed.setTimestamp();
+                }
+            } else {
+                eventEmbed.setTimestamp();
+            }
 
             // Create action buttons
             const actionRow = new ActionRowBuilder()
