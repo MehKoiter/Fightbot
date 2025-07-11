@@ -1,5 +1,8 @@
 import { Events, EmbedBuilder } from 'discord.js';
 import FighterInteractionHandler from '../services/fighterInteractionHandler.js';
+import SportsDataMMAService from '../services/sportsDataMMAService.js';
+import WikipediaUFCService from '../services/wikipediaUFCService.js';
+import { VERSION_CONFIG } from '../config/version.js';
 
 // Initialize fighter interaction handler with error handling
 let fighterHandler;
@@ -294,13 +297,13 @@ async function handleButtonInteraction(interaction) {
 		
 		switch (action) {
 			case 'details':
-				embed = createSimpleInfoEmbed('📋 Full Card Details', `Loading complete fight card for UFC ${eventId}... All features are completely FREE!`);
+				embed = await createUFCDetailsEmbed(eventId);
 				break;
 			case 'stats':
-				embed = createSimpleInfoEmbed('📊 Event Statistics', `Loading detailed event stats for UFC ${eventId}... All features are completely FREE!`);
+				embed = await createUFCStatsEmbed(eventId);
 				break;
 			case 'upcoming':
-				embed = createSimpleInfoEmbed('⏭️ Upcoming Events', 'Loading upcoming UFC events... All features are completely FREE!');
+				embed = await createUpcomingEventsEmbed();
 				break;
 			default:
 				embed = createSimpleInfoEmbed('❌ Unknown Action', 'This button action is not recognized.');
@@ -349,4 +352,400 @@ function createSimpleInfoEmbed(title, description) {
 		.setDescription(description)
 		.setFooter({ text: 'FightBot - All Features FREE Forever! ❤️' })
 		.setTimestamp();
+}
+
+/**
+ * Create detailed UFC event embed with complete fight card
+ * @param {string} eventId - UFC event ID or number
+ * @returns {EmbedBuilder} The created embed with full details
+ */
+async function createUFCDetailsEmbed(eventId) {
+	try {
+		// Try to get detailed event data
+		const sportsDataService = new SportsDataMMAService();
+		const wikipediaService = new WikipediaUFCService();
+		
+		let eventDetails = null;
+		let dataSource = 'Unknown';
+		
+		// Try SportsData.io first if we have an event ID
+		if (eventId && !isNaN(eventId)) {
+			try {
+				eventDetails = await sportsDataService.getEventDetails(eventId);
+				if (eventDetails) {
+					dataSource = 'SportsData.io';
+				}
+			} catch (error) {
+				console.log(`SportsData.io failed for event ${eventId}, trying alternative...`);
+			}
+		}
+		
+		// If SportsData failed or we have a UFC number, try Wikipedia
+		if (!eventDetails) {
+			try {
+				eventDetails = await wikipediaService.getUFCEventByNumber(eventId);
+				if (eventDetails) {
+					dataSource = 'Wikipedia';
+				}
+			} catch (error) {
+				console.log(`Wikipedia failed for UFC ${eventId}`);
+			}
+		}
+		
+		if (!eventDetails) {
+			return createSimpleInfoEmbed(
+				'❌ Details Not Available', 
+				`Sorry, I couldn't load detailed information for UFC ${eventId}. The event may be too old or not yet available in our database.`
+			);
+		}
+		
+		const embed = new EmbedBuilder()
+			.setColor('#ff6600')
+			.setTitle(`📋 ${eventDetails.title || eventDetails.Name || `UFC ${eventId}`} - Full Card Details`)
+			.setDescription(eventDetails.description || eventDetails.ShortName || 'Complete fight card information');
+		
+		// Add all available fights
+		const fights = eventDetails.fights || eventDetails.Fights || [];
+		if (fights.length > 0) {
+			let fightsList = '';
+			
+			if (dataSource === 'Wikipedia') {
+				fightsList = fights.map((fight, index) => {
+					if (fight.fighters && fight.fighters.length >= 2) {
+						const emoji = index === 0 ? '👑' : index < 5 ? '🥊' : '⚔️';
+						return `${emoji} **${fight.fighters[0].name}** vs **${fight.fighters[1].name}**${fight.weightClass ? ` (${fight.weightClass})` : ''}`;
+					} else if (fight.rawText) {
+						const emoji = index === 0 ? '👑' : index < 5 ? '🥊' : '⚔️';
+						return `${emoji} ${fight.rawText}`;
+					}
+					return null;
+				}).filter(Boolean).join('\n');
+			} else {
+				// SportsData format
+				const sortedFights = fights.sort((a, b) => (b.Order || 0) - (a.Order || 0));
+				fightsList = sortedFights.map((fight, index) => {
+					const fighter1 = fight.Fighters?.[0];
+					const fighter2 = fight.Fighters?.[1];
+					
+					if (fighter1 && fighter2) {
+						const emoji = index === 0 ? '👑' : index < 5 ? '🥊' : '⚔️';
+						const name1 = `${fighter1.FirstName} ${fighter1.LastName}`;
+						const name2 = `${fighter2.FirstName} ${fighter2.LastName}`;
+						
+						return `${emoji} **${name1}** vs **${name2}**${fight.WeightClass ? ` (${fight.WeightClass})` : ''}`;
+					}
+					return null;
+				}).filter(Boolean).join('\n');
+			}
+			
+			// Split into chunks if too long for Discord
+			const chunks = [];
+			let currentChunk = '';
+			const lines = fightsList.split('\n');
+			
+			for (const line of lines) {
+				if ((currentChunk + line + '\n').length > 1024) {
+					if (currentChunk) chunks.push(currentChunk.trim());
+					currentChunk = line + '\n';
+				} else {
+					currentChunk += line + '\n';
+				}
+			}
+			if (currentChunk) chunks.push(currentChunk.trim());
+			
+			// Add fields for each chunk
+			chunks.forEach((chunk, index) => {
+				embed.addFields({
+					name: index === 0 ? `🥊 Complete Fight Card (${fights.length} fights)` : '‎', // Zero-width space for continuation
+					value: chunk,
+					inline: false
+				});
+			});
+		} else {
+			embed.addFields({
+				name: '🥊 Fight Card',
+				value: 'Fight card details not available for this event.',
+				inline: false
+			});
+		}
+		
+		// Add event info if available
+		const eventDate = eventDetails.dateTime || eventDetails.DateTime || eventDetails.date;
+		if (eventDate) {
+			const parsedDate = new Date(eventDate);
+			if (!isNaN(parsedDate.getTime())) {
+				embed.addFields({
+					name: '📅 Event Date',
+					value: parsedDate.toLocaleDateString('en-US', {
+						weekday: 'long',
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric'
+					}),
+					inline: true
+				});
+			}
+		}
+		
+		const location = eventDetails.location || eventDetails.venue || 
+			(eventDetails.City && eventDetails.Country ? `${eventDetails.City}, ${eventDetails.Country}` : null);
+		if (location) {
+			embed.addFields({
+				name: '📍 Location',
+				value: location,
+				inline: true
+			});
+		}
+		
+		embed.setFooter({ 
+			text: `${VERSION_CONFIG.BOT_NAME} v${VERSION_CONFIG.VERSION} • Data from ${dataSource} • All Features FREE!` 
+		});
+		embed.setTimestamp();
+		
+		return embed;
+		
+	} catch (error) {
+		console.error('Error creating UFC details embed:', error);
+		return createSimpleInfoEmbed(
+			'❌ Error Loading Details', 
+			'Sorry, there was an error loading the detailed fight card information. Please try again later.'
+		);
+	}
+}
+
+/**
+ * Create UFC event statistics embed
+ * @param {string} eventId - UFC event ID or number
+ * @returns {EmbedBuilder} The created embed with event stats
+ */
+async function createUFCStatsEmbed(eventId) {
+	try {
+		const sportsDataService = new SportsDataMMAService();
+		const wikipediaService = new WikipediaUFCService();
+		
+		let eventDetails = null;
+		let dataSource = 'Unknown';
+		
+		// Try to get event data
+		if (eventId && !isNaN(eventId)) {
+			try {
+				eventDetails = await sportsDataService.getEventDetails(eventId);
+				if (eventDetails) {
+					dataSource = 'SportsData.io';
+				}
+			} catch (error) {
+				console.log(`SportsData.io failed for event ${eventId}, trying Wikipedia...`);
+			}
+		}
+		
+		if (!eventDetails) {
+			try {
+				eventDetails = await wikipediaService.getUFCEventByNumber(eventId);
+				if (eventDetails) {
+					dataSource = 'Wikipedia';
+				}
+			} catch (error) {
+				console.log(`Wikipedia failed for UFC ${eventId}`);
+			}
+		}
+		
+		if (!eventDetails) {
+			return createSimpleInfoEmbed(
+				'❌ Statistics Not Available', 
+				`Sorry, I couldn't load statistics for UFC ${eventId}. The event may be too old or not yet available in our database.`
+			);
+		}
+		
+		const embed = new EmbedBuilder()
+			.setColor('#ff6600')
+			.setTitle(`📊 ${eventDetails.title || eventDetails.Name || `UFC ${eventId}`} - Event Statistics`)
+			.setDescription('Detailed event statistics and information');
+		
+		const fights = eventDetails.fights || eventDetails.Fights || [];
+		
+		// Basic event stats
+		embed.addFields({
+			name: '📊 Fight Statistics',
+			value: `**Total Fights:** ${fights.length}\n**Event Number:** UFC ${eventId}`,
+			inline: true
+		});
+		
+		// Date and venue info
+		const eventDate = eventDetails.dateTime || eventDetails.DateTime || eventDetails.date;
+		if (eventDate) {
+			const parsedDate = new Date(eventDate);
+			if (!isNaN(parsedDate.getTime())) {
+				embed.addFields({
+					name: '📅 Event Details',
+					value: `**Date:** ${parsedDate.toLocaleDateString('en-US', { 
+						weekday: 'long', 
+						year: 'numeric', 
+						month: 'long', 
+						day: 'numeric' 
+					})}`,
+					inline: true
+				});
+			}
+		}
+		
+		const location = eventDetails.location || eventDetails.venue || 
+			(eventDetails.City && eventDetails.Country ? `${eventDetails.City}, ${eventDetails.Country}` : null);
+		if (location) {
+			embed.addFields({
+				name: '📍 Venue Information',
+				value: `**Location:** ${location}`,
+				inline: false
+			});
+		}
+		
+		// Fight breakdown by card
+		if (fights.length > 0) {
+			let mainCardCount = 0;
+			let prelimsCount = 0;
+			let earlyPrelimsCount = 0;
+			
+			if (dataSource === 'SportsData.io') {
+				fights.forEach(fight => {
+					if (fight.Card === 'Main' || (fight.Order && fight.Order <= 5)) {
+						mainCardCount++;
+					} else if (fight.Card === 'Preliminary') {
+						prelimsCount++;
+					} else {
+						earlyPrelimsCount++;
+					}
+				});
+			} else {
+				// For Wikipedia data, estimate based on fight order
+				mainCardCount = Math.min(5, fights.length);
+				prelimsCount = Math.max(0, fights.length - 5);
+			}
+			
+			embed.addFields({
+				name: '🎭 Card Breakdown',
+				value: `**Main Card:** ${mainCardCount} fights\n**Preliminary Card:** ${prelimsCount} fights${earlyPrelimsCount > 0 ? `\n**Early Prelims:** ${earlyPrelimsCount} fights` : ''}`,
+				inline: false
+			});
+		}
+		
+		// Status information
+		if (eventDetails.Status) {
+			embed.addFields({
+				name: '📈 Event Status',
+				value: `**Status:** ${eventDetails.Status}`,
+				inline: true
+			});
+		}
+		
+		embed.setFooter({ 
+			text: `${VERSION_CONFIG.BOT_NAME} v${VERSION_CONFIG.VERSION} • Data from ${dataSource} • All Features FREE!` 
+		});
+		embed.setTimestamp();
+		
+		return embed;
+		
+	} catch (error) {
+		console.error('Error creating UFC stats embed:', error);
+		return createSimpleInfoEmbed(
+			'❌ Error Loading Statistics', 
+			'Sorry, there was an error loading the event statistics. Please try again later.'
+		);
+	}
+}
+
+/**
+ * Create upcoming UFC events embed
+ * @returns {EmbedBuilder} The created embed with upcoming events
+ */
+async function createUpcomingEventsEmbed() {
+	try {
+		const sportsDataService = new SportsDataMMAService();
+		
+		// Get upcoming events
+		const currentYear = new Date().getFullYear().toString();
+		const schedule = await sportsDataService.getUFCSchedule(currentYear);
+		
+		if (!schedule || schedule.length === 0) {
+			return createSimpleInfoEmbed(
+				'❌ No Upcoming Events', 
+				'Sorry, I couldn\'t find any upcoming UFC events in our database. Please try again later.'
+			);
+		}
+		
+		// Filter for upcoming events
+		const now = new Date();
+		const upcomingEvents = schedule.filter(event => {
+			const eventDate = new Date(event.DateTime);
+			return eventDate > now;
+		}).sort((a, b) => new Date(a.DateTime) - new Date(b.DateTime));
+		
+		if (upcomingEvents.length === 0) {
+			return createSimpleInfoEmbed(
+				'📅 No Upcoming Events', 
+				'There are currently no upcoming UFC events scheduled in our database. Check back later for updates!'
+			);
+		}
+		
+		const embed = new EmbedBuilder()
+			.setColor('#00ff00')
+			.setTitle('⏭️ Upcoming UFC Events')
+			.setDescription(`Here are the next ${Math.min(upcomingEvents.length, 5)} upcoming UFC events:`);
+		
+		// Show next 5 upcoming events
+		const eventsToShow = upcomingEvents.slice(0, 5);
+		let eventsText = '';
+		
+		eventsToShow.forEach((event, index) => {
+			const eventDate = new Date(event.DateTime);
+			const dateStr = eventDate.toLocaleDateString('en-US', {
+				weekday: 'short',
+				month: 'short',
+				day: 'numeric',
+				year: 'numeric'
+			});
+			
+			const eventName = event.Name || event.ShortName || `UFC Event`;
+			const location = event.City && event.Country ? `${event.City}, ${event.Country}` : 'TBA';
+			
+			eventsText += `**${index + 1}.** ${eventName}\n`;
+			eventsText += `📅 ${dateStr}\n`;
+			eventsText += `📍 ${location}\n\n`;
+		});
+		
+		embed.addFields({
+			name: '🗓️ Upcoming Events',
+			value: eventsText.trim(),
+			inline: false
+		});
+		
+		// Add next event highlight
+		const nextEvent = upcomingEvents[0];
+		const nextEventDate = new Date(nextEvent.DateTime);
+		const daysUntil = Math.ceil((nextEventDate - now) / (1000 * 60 * 60 * 24));
+		
+		embed.addFields({
+			name: '🎯 Next Event',
+			value: `**${nextEvent.Name || 'UFC Event'}**\n📅 In ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`,
+			inline: true
+		});
+		
+		embed.addFields({
+			name: '💡 Tip',
+			value: 'Use `/ufc [number]` to get detailed information about a specific event!',
+			inline: false
+		});
+		
+		embed.setFooter({ 
+			text: `${VERSION_CONFIG.BOT_NAME} v${VERSION_CONFIG.VERSION} • Data from SportsData.io • All Features FREE!` 
+		});
+		embed.setTimestamp();
+		
+		return embed;
+		
+	} catch (error) {
+		console.error('Error creating upcoming events embed:', error);
+		return createSimpleInfoEmbed(
+			'❌ Error Loading Events', 
+			'Sorry, there was an error loading upcoming UFC events. Please try again later.'
+		);
+	}
 }
