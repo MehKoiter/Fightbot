@@ -418,7 +418,9 @@ export default class WikipediaUFCService {
                 fighters: [],
                 rawText: text,
                 weightClass: null,
-                method: null
+                method: null,
+                winner: null,
+                result: null
             };
 
             // Extract weight class if present
@@ -428,31 +430,58 @@ export default class WikipediaUFCService {
             }
 
             // Extract method if present
-            const methodMatch = text.match(/(KO|TKO|Submission|Decision|DQ|NC)/i);
+            const methodMatch = text.match(/(KO|TKO|Submission|Decision|Unanimous Decision|Majority Decision|Split Decision|DQ|NC|Technical Decision)/i);
             if (methodMatch) {
                 fightData.method = methodMatch[1];
             }
 
-            // Extract fighter names
-            if (text.includes(' vs ')) {
-                const parts = text.split(' vs ');
-                if (parts.length >= 2) {
-                    fightData.fighters.push({ name: this.cleanFighterName(parts[0]) });
-                    fightData.fighters.push({ name: this.cleanFighterName(parts[1]) });
-                }
-            } else if (text.includes(' def. ')) {
+            // Extract round and time info
+            const roundTimeMatch = text.match(/R(\d+)\s+(\d+:\d+)/);
+            if (roundTimeMatch) {
+                fightData.round = roundTimeMatch[1];
+                fightData.time = roundTimeMatch[2];
+            }
+
+            // Extract fighter names and determine winner
+            if (text.includes(' def. ')) {
                 const parts = text.split(' def. ');
                 if (parts.length >= 2) {
-                    fightData.fighters.push({ name: this.cleanFighterName(parts[0]) });
-                    fightData.fighters.push({ name: this.cleanFighterName(parts[1]) });
-                    fightData.result = 'win'; // First fighter won
+                    const winnerName = this.cleanFighterName(parts[0]);
+                    const loserName = this.cleanFighterName(parts[1]);
+                    fightData.fighters.push({ name: winnerName });
+                    fightData.fighters.push({ name: loserName });
+                    fightData.winner = winnerName;
+                    fightData.result = 'win';
                 }
             } else if (text.includes(' defeated ')) {
                 const parts = text.split(' defeated ');
                 if (parts.length >= 2) {
+                    const winnerName = this.cleanFighterName(parts[0]);
+                    const loserName = this.cleanFighterName(parts[1]);
+                    fightData.fighters.push({ name: winnerName });
+                    fightData.fighters.push({ name: loserName });
+                    fightData.winner = winnerName;
+                    fightData.result = 'win';
+                }
+            } else if (text.includes(' beat ')) {
+                const parts = text.split(' beat ');
+                if (parts.length >= 2) {
+                    const winnerName = this.cleanFighterName(parts[0]);
+                    const loserName = this.cleanFighterName(parts[1]);
+                    fightData.fighters.push({ name: winnerName });
+                    fightData.fighters.push({ name: loserName });
+                    fightData.winner = winnerName;
+                    fightData.result = 'win';
+                }
+            } else if (text.includes(' vs ')) {
+                const parts = text.split(' vs ');
+                if (parts.length >= 2) {
                     fightData.fighters.push({ name: this.cleanFighterName(parts[0]) });
                     fightData.fighters.push({ name: this.cleanFighterName(parts[1]) });
-                    fightData.result = 'win'; // First fighter won
+                    // Check if there's result info after the vs
+                    if (text.toLowerCase().includes('draw')) {
+                        fightData.result = 'draw';
+                    }
                 }
             }
 

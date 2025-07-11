@@ -444,10 +444,41 @@ async function createUFCDetailsEmbed(eventId) {
 				fightsList = fights.map((fight, index) => {
 					if (fight.fighters && fight.fighters.length >= 2) {
 						const emoji = index === 0 ? '👑' : index < 5 ? '🥊' : '⚔️';
-						return `${emoji} **${fight.fighters[0].name}** vs **${fight.fighters[1].name}**${fight.weightClass ? ` (${fight.weightClass})` : ''}`;
+						let fightText = '';
+						
+						// Check if we have winner information
+						if (fight.result === 'win' || fight.winner) {
+							// If there's a winner, format as "Winner def. Loser"
+							const winner = fight.winner || fight.fighters[0].name;
+							const loser = fight.fighters.find(f => f.name !== winner)?.name || fight.fighters[1].name;
+							fightText = `${emoji} **${winner}** def. ${loser}`;
+							
+							// Add method if available
+							if (fight.method) {
+								fightText += ` (${fight.method})`;
+							} else if (fight.winMethod) {
+								fightText += ` (${fight.winMethod})`;
+							}
+						} else {
+							// No winner info, show traditional vs format
+							fightText = `${emoji} **${fight.fighters[0].name}** vs **${fight.fighters[1].name}**`;
+						}
+						
+						// Add weight class
+						if (fight.weightClass) {
+							fightText += ` - ${fight.weightClass}`;
+						}
+						
+						return fightText;
 					} else if (fight.rawText) {
 						const emoji = index === 0 ? '👑' : index < 5 ? '🥊' : '⚔️';
-						return `${emoji} ${fight.rawText}`;
+						
+						// Try to parse winner from rawText (def. format)
+						if (fight.rawText.includes(' def. ') || fight.rawText.includes(' defeated ')) {
+							return `${emoji} ${fight.rawText}`;
+						} else {
+							return `${emoji} ${fight.rawText}`;
+						}
 					}
 					return null;
 				}).filter(Boolean).join('\n');
@@ -462,8 +493,60 @@ async function createUFCDetailsEmbed(eventId) {
 						const emoji = index === 0 ? '👑' : index < 5 ? '🥊' : '⚔️';
 						const name1 = `${fighter1.FirstName} ${fighter1.LastName}`;
 						const name2 = `${fighter2.FirstName} ${fighter2.LastName}`;
+						let fightText = '';
 						
-						return `${emoji} **${name1}** vs **${name2}**${fight.WeightClass ? ` (${fight.WeightClass})` : ''}`;
+						// Check for winner information in SportsData format
+						if (fight.Status === 'Final' || fighter1.Winner !== undefined || fighter2.Winner !== undefined) {
+							let winner, loser;
+							
+							// Determine winner/loser from Winner boolean
+							if (fighter1.Winner === true) {
+								winner = name1;
+								loser = name2;
+							} else if (fighter2.Winner === true) {
+								winner = name2;
+								loser = name1;
+							} else if (fight.WinnerId) {
+								// Fallback to WinnerId
+								if (fight.WinnerId === fighter1.FighterId) {
+									winner = name1;
+									loser = name2;
+								} else if (fight.WinnerId === fighter2.FighterId) {
+									winner = name2;
+									loser = name1;
+								}
+							}
+							
+							if (winner && loser) {
+								fightText = `${emoji} **${winner}** def. ${loser}`;
+								
+								// Add method if available and not "Scrambled"
+								if (fight.ResultType && fight.ResultType !== 'Scrambled') {
+									fightText += ` (${fight.ResultType})`;
+								}
+								
+								// Add round info if available
+								if (fight.ResultRound && fight.ResultRound !== 'Scrambled') {
+									fightText += ` R${fight.ResultRound}`;
+								}
+							} else if (fight.Status === 'Final' && fight.ResultType && fight.ResultType.toLowerCase().includes('draw')) {
+								// Handle draws
+								fightText = `${emoji} **${name1}** vs **${name2}** (Draw)`;
+							} else {
+								// Fallback to vs format
+								fightText = `${emoji} **${name1}** vs **${name2}**`;
+							}
+						} else {
+							// No winner info or fight not completed, show traditional vs format
+							fightText = `${emoji} **${name1}** vs **${name2}**`;
+						}
+						
+						// Add weight class if available and not scrambled
+						if (fight.WeightClass && fight.WeightClass !== 'Scrambled') {
+							fightText += ` - ${fight.WeightClass}`;
+						}
+						
+						return fightText;
 					}
 					return null;
 				}).filter(Boolean).join('\n');
@@ -487,7 +570,7 @@ async function createUFCDetailsEmbed(eventId) {
 			// Add fields for each chunk
 			chunks.forEach((chunk, index) => {
 				embed.addFields({
-					name: index === 0 ? `🥊 Complete Fight Card (${fights.length} fights)` : '‎', // Zero-width space for continuation
+					name: index === 0 ? `🥊 Complete Fight Card & Results (${fights.length} fights)` : '‎', // Zero-width space for continuation
 					value: chunk,
 					inline: false
 				});
