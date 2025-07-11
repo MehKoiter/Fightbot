@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "debug-env": "node utils/debug-env.js",
     "dev": "node --watch index.js",
     "deploy": "node deploy-commands.js",
     "deploy:global": "node deploy-commands.js --global",
