@@ -277,7 +277,7 @@ async function sendErrorResponse(interaction, response) {
 async function handleButtonInteraction(interaction) {
 	const { customId } = interaction;
 	
-	console.log(`🔍 Processing button interaction: ${customId}`);
+	console.log(`🔍 Processing button interaction: ${customId} by ${interaction.user.tag}`);
 	
 	// Fighter-related button interactions (Phase 7)
 	if (customId.startsWith('fighter_') || customId.startsWith('comparison_')) {
@@ -290,10 +290,11 @@ async function handleButtonInteraction(interaction) {
 	
 	// UFC command button interactions
 	if (customId.startsWith('ufc_')) {
-		const action = customId.split('_')[1];
-		const eventId = customId.split('_')[2];
+		const parts = customId.split('_');
+		const action = parts[1];
+		const eventId = parts[2]; // This may be undefined for buttons like 'ufc_upcoming'
 		
-		console.log(`🔍 UFC button - Action: ${action}, EventId: ${eventId}`);
+		console.log(`🔍 UFC button - Action: ${action}, EventId: ${eventId || 'N/A'}`);
 		
 		await interaction.deferReply({ ephemeral: true });
 		
@@ -302,11 +303,19 @@ async function handleButtonInteraction(interaction) {
 		try {
 			switch (action) {
 				case 'details':
-					embed = await createUFCDetailsEmbed(eventId);
+					if (!eventId) {
+						embed = createSimpleInfoEmbed('❌ Missing Event ID', 'Event details require a valid event ID.');
+					} else {
+						embed = await createUFCDetailsEmbed(eventId);
+					}
 					break;
 				case 'stats':
-					console.log(`📊 Creating stats embed for event ${eventId}`);
-					embed = await createUFCStatsEmbed(eventId);
+					if (!eventId) {
+						embed = createSimpleInfoEmbed('❌ Missing Event ID', 'Event statistics require a valid event ID.');
+					} else {
+						console.log(`📊 Creating stats embed for event ${eventId}`);
+						embed = await createUFCStatsEmbed(eventId);
+					}
 					break;
 				case 'upcoming':
 					embed = await createUpcomingEventsEmbed();
@@ -351,6 +360,12 @@ async function handleButtonInteraction(interaction) {
 		await interaction.editReply({ embeds: [embed] });
 		return; // Important: Return here to prevent fall-through
 	} else {
+		console.error(`❌ Unknown button interaction received:`, {
+			customId: customId,
+			user: interaction.user.tag,
+			guildId: interaction.guildId,
+			timestamp: new Date().toISOString()
+		});
 		throw new Error(`Unknown button interaction: ${customId}`);
 	}
 }
