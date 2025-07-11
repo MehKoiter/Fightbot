@@ -277,6 +277,8 @@ async function sendErrorResponse(interaction, response) {
 async function handleButtonInteraction(interaction) {
 	const { customId } = interaction;
 	
+	console.log(`🔍 Processing button interaction: ${customId}`);
+	
 	// Fighter-related button interactions (Phase 7)
 	if (customId.startsWith('fighter_') || customId.startsWith('comparison_')) {
 		if (fighterHandler) {
@@ -291,25 +293,38 @@ async function handleButtonInteraction(interaction) {
 		const action = customId.split('_')[1];
 		const eventId = customId.split('_')[2];
 		
+		console.log(`🔍 UFC button - Action: ${action}, EventId: ${eventId}`);
+		
 		await interaction.deferReply({ ephemeral: true });
 		
 		let embed;
 		
-		switch (action) {
-			case 'details':
-				embed = await createUFCDetailsEmbed(eventId);
-				break;
-			case 'stats':
-				embed = await createUFCStatsEmbed(eventId);
-				break;
-			case 'upcoming':
-				embed = await createUpcomingEventsEmbed();
-				break;
-			default:
-				embed = createSimpleInfoEmbed('❌ Unknown Action', 'This button action is not recognized.');
+		try {
+			switch (action) {
+				case 'details':
+					embed = await createUFCDetailsEmbed(eventId);
+					break;
+				case 'stats':
+					console.log(`📊 Creating stats embed for event ${eventId}`);
+					embed = await createUFCStatsEmbed(eventId);
+					break;
+				case 'upcoming':
+					embed = await createUpcomingEventsEmbed();
+					break;
+				default:
+					embed = createSimpleInfoEmbed('❌ Unknown Action', 'This button action is not recognized.');
+			}
+			
+			await interaction.editReply({ embeds: [embed] });
+		} catch (embedError) {
+			console.error(`❌ Error creating embed for action ${action}:`, embedError);
+			const errorEmbed = createSimpleInfoEmbed(
+				'❌ Error Loading Content',
+				'Sorry, there was an error loading the requested information. Please try again later.'
+			);
+			await interaction.editReply({ embeds: [errorEmbed] });
 		}
-		
-		await interaction.editReply({ embeds: [embed] });
+		return; // Important: Return here to prevent fall-through
 	}
 	// Existing fight button interactions
 	else if (customId.startsWith('fight_')) {
@@ -334,6 +349,7 @@ async function handleButtonInteraction(interaction) {
 		}
 		
 		await interaction.editReply({ embeds: [embed] });
+		return; // Important: Return here to prevent fall-through
 	} else {
 		throw new Error(`Unknown button interaction: ${customId}`);
 	}
