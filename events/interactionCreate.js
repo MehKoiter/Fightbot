@@ -4,6 +4,8 @@ import FighterInteractionHandler from '../services/fighterInteractionHandler.js'
 import SportsDataMMAService from '../services/sportsDataMMAService.js';
 import WikipediaUFCService from '../services/wikipediaUFCService.js';
 import { VERSION_CONFIG } from '../config/version.js';
+import { errorHandler, asyncErrorHandler } from '../utils/errorHandler.js';
+import { performanceMonitor } from '../utils/performanceMonitor.js';
 
 // Initialize fighter interaction handler with error handling
 let fighterHandler;
