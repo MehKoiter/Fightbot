@@ -1,3 +1,4 @@
+
 import { Events, EmbedBuilder } from 'discord.js';
 import FighterInteractionHandler from '../services/fighterInteractionHandler.js';
 import SportsDataMMAService from '../services/sportsDataMMAService.js';
@@ -292,9 +293,10 @@ async function handleButtonInteraction(interaction) {
 	if (customId.startsWith('ufc_')) {
 		const parts = customId.split('_');
 		const action = parts[1];
-		const eventId = parts[2]; // This may be undefined for buttons like 'ufc_upcoming'
+		const dataSource = parts[2]; // 'sports', 'wiki', or undefined for backwards compatibility
+		const eventId = parts[3] || parts[2]; // New format uses parts[3], old format uses parts[2]
 		
-		console.log(`🔍 UFC button - Action: ${action}, EventId: ${eventId || 'N/A'}`);
+		console.log(`🔍 UFC button - Action: ${action}, DataSource: ${dataSource || 'legacy'}, EventId: ${eventId || 'N/A'}`);
 		
 		await interaction.deferReply({ ephemeral: true });
 		
@@ -306,15 +308,15 @@ async function handleButtonInteraction(interaction) {
 					if (!eventId) {
 						embed = createSimpleInfoEmbed('❌ Missing Event ID', 'Event details require a valid event ID.');
 					} else {
-						embed = await createUFCDetailsEmbed(eventId);
+						embed = await createUFCDetailsEmbed(eventId, dataSource);
 					}
 					break;
 				case 'stats':
 					if (!eventId) {
 						embed = createSimpleInfoEmbed('❌ Missing Event ID', 'Event statistics require a valid event ID.');
 					} else {
-						console.log(`📊 Creating stats embed for event ${eventId}`);
-						embed = await createUFCStatsEmbed(eventId);
+						console.log(`📊 Creating stats embed for event ${eventId} from ${dataSource || 'auto-detect'}`);
+						embed = await createUFCStatsEmbed(eventId, dataSource);
 					}
 					break;
 				case 'upcoming':
@@ -390,36 +392,57 @@ function createSimpleInfoEmbed(title, description) {
  * @param {string} eventId - UFC event ID or number
  * @returns {EmbedBuilder} The created embed with full details
  */
-async function createUFCDetailsEmbed(eventId) {
+async function createUFCDetailsEmbed(eventId, dataSource = null) {
 	try {
-		// Try to get detailed event data
+		// Try to get detailed event data using the specified data source
 		const sportsDataService = new SportsDataMMAService();
 		const wikipediaService = new WikipediaUFCService();
 		
 		let eventDetails = null;
-		let dataSource = 'Unknown';
+		let actualDataSource = 'Unknown';
 		
-		// Try SportsData.io first if we have an event ID
-		if (eventId && !isNaN(eventId)) {
+		// Use the specified data source if available
+		if (dataSource === 'sports' && eventId && !isNaN(eventId)) {
 			try {
 				eventDetails = await sportsDataService.getEventDetails(eventId);
 				if (eventDetails) {
-					dataSource = 'SportsData.io';
+					actualDataSource = 'SportsData.io';
 				}
 			} catch (error) {
 				console.log(`SportsData.io failed for event ${eventId}, trying alternative...`);
 			}
-		}
-		
-		// If SportsData failed or we have a UFC number, try Wikipedia
-		if (!eventDetails) {
+		} else if (dataSource === 'wiki') {
 			try {
 				eventDetails = await wikipediaService.getUFCEventByNumber(eventId);
 				if (eventDetails) {
-					dataSource = 'Wikipedia';
+					actualDataSource = 'Wikipedia';
 				}
 			} catch (error) {
 				console.log(`Wikipedia failed for UFC ${eventId}`);
+			}
+		} else {
+			// Legacy behavior - try SportsData.io first if we have a numeric event ID
+			if (eventId && !isNaN(eventId)) {
+				try {
+					eventDetails = await sportsDataService.getEventDetails(eventId);
+					if (eventDetails) {
+						actualDataSource = 'SportsData.io';
+					}
+				} catch (error) {
+					console.log(`SportsData.io failed for event ${eventId}, trying alternative...`);
+				}
+			}
+			
+			// If SportsData failed or we have a UFC number, try Wikipedia
+			if (!eventDetails) {
+				try {
+					eventDetails = await wikipediaService.getUFCEventByNumber(eventId);
+					if (eventDetails) {
+						actualDataSource = 'Wikipedia';
+					}
+				} catch (error) {
+					console.log(`Wikipedia failed for UFC ${eventId}`);
+				}
 			}
 		}
 		
@@ -440,7 +463,7 @@ async function createUFCDetailsEmbed(eventId) {
 		if (fights.length > 0) {
 			let fightsList = '';
 			
-			if (dataSource === 'Wikipedia') {
+			if (actualDataSource === 'Wikipedia') {
 				fightsList = fights.map((fight, index) => {
 					if (fight.fighters && fight.fighters.length >= 2) {
 						const emoji = index === 0 ? '👑' : index < 5 ? '🥊' : '⚔️';
@@ -612,7 +635,7 @@ async function createUFCDetailsEmbed(eventId) {
 		}
 		
 		embed.setFooter({ 
-			text: `${VERSION_CONFIG.BOT_NAME} v${VERSION_CONFIG.VERSION} • Data from ${dataSource} • All Features FREE!` 
+			text: `${VERSION_CONFIG.BOT_NAME} v${VERSION_CONFIG.VERSION} • Data from ${actualDataSource} • All Features FREE!` 
 		});
 		embed.setTimestamp();
 		
@@ -630,36 +653,58 @@ async function createUFCDetailsEmbed(eventId) {
 /**
  * Create UFC event statistics embed
  * @param {string} eventId - UFC event ID or number
+ * @param {string} dataSource - Data source hint ('sports', 'wiki', or null for auto-detect)
  * @returns {EmbedBuilder} The created embed with event stats
  */
-async function createUFCStatsEmbed(eventId) {
+async function createUFCStatsEmbed(eventId, dataSource = null) {
 	try {
 		const sportsDataService = new SportsDataMMAService();
 		const wikipediaService = new WikipediaUFCService();
 		
 		let eventDetails = null;
-		let dataSource = 'Unknown';
+		let actualDataSource = 'Unknown';
 		
-		// Try to get event data
-		if (eventId && !isNaN(eventId)) {
+		// Use the specified data source if available
+		if (dataSource === 'sports' && eventId && !isNaN(eventId)) {
 			try {
 				eventDetails = await sportsDataService.getEventDetails(eventId);
 				if (eventDetails) {
-					dataSource = 'SportsData.io';
+					actualDataSource = 'SportsData.io';
 				}
 			} catch (error) {
 				console.log(`SportsData.io failed for event ${eventId}, trying Wikipedia...`);
 			}
-		}
-		
-		if (!eventDetails) {
+		} else if (dataSource === 'wiki') {
 			try {
 				eventDetails = await wikipediaService.getUFCEventByNumber(eventId);
 				if (eventDetails) {
-					dataSource = 'Wikipedia';
+					actualDataSource = 'Wikipedia';
 				}
 			} catch (error) {
 				console.log(`Wikipedia failed for UFC ${eventId}`);
+			}
+		} else {
+			// Legacy behavior - try to get event data
+			if (eventId && !isNaN(eventId)) {
+				try {
+					eventDetails = await sportsDataService.getEventDetails(eventId);
+					if (eventDetails) {
+						actualDataSource = 'SportsData.io';
+					}
+				} catch (error) {
+					console.log(`SportsData.io failed for event ${eventId}, trying Wikipedia...`);
+				}
+			}
+			
+			if (!eventDetails) {
+				try {
+					eventDetails = await wikipediaService.getUFCEventByNumber(eventId);
+					if (eventDetails) {
+						actualDataSource = 'Wikipedia';
+					}
+				} catch (error) {
+					console.log(`Wikipedia failed for UFC ${eventId}`);
+				}
 			}
 		}
 		
@@ -751,7 +796,7 @@ async function createUFCStatsEmbed(eventId) {
 		}
 		
 		embed.setFooter({ 
-			text: `${VERSION_CONFIG.BOT_NAME} v${VERSION_CONFIG.VERSION} • Data from ${dataSource} • All Features FREE!` 
+			text: `${VERSION_CONFIG.BOT_NAME} v${VERSION_CONFIG.VERSION} • Data from ${actualDataSource} • All Features FREE!` 
 		});
 		embed.setTimestamp();
 		

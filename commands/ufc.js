@@ -213,15 +213,20 @@ export default {
                 eventEmbed.setTimestamp();
             }
 
-            // Create action buttons
+            // Create action buttons with data source information
+            // This ensures the button handler knows which service and ID to use
+            const eventIdentifier = dataSource === 'SportsData.io' ? 
+                `sports_${event.EventId}` : 
+                `wiki_${cleanEventNumber}`;
+            
             const actionRow = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId(`ufc_details_${event.EventId || cleanEventNumber}`)
+                        .setCustomId(`ufc_details_${eventIdentifier}`)
                         .setLabel('📋 Full Card')
                         .setStyle(ButtonStyle.Primary),
                     new ButtonBuilder()
-                        .setCustomId(`ufc_stats_${event.EventId || cleanEventNumber}`)
+                        .setCustomId(`ufc_stats_${eventIdentifier}`)
                         .setLabel('📊 Event Stats')
                         .setStyle(ButtonStyle.Secondary),
                     new ButtonBuilder()
