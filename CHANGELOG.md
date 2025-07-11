@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🧪 Testing Improvements
 - **UFC Stats Service Tests**: Comprehensive test suite for new fighter service
-- **Archived ESPN Tests**: Moved experimental ESPN service tests to archived folder
+- **Dead Code Cleanup**: Removed experimental ESPN service (never fully implemented)
 - **Test Organization**: Proper file structure with imports and test categories
 - **100% Test Coverage**: All fighter service functionality tested and verified
 

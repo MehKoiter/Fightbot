@@ -1,6 +1,8 @@
-// GatewayIntentBits is the language used for discord.js to know what things to monitor
+// FightBot - Discord UFC Bot
+// Enhanced with improved error handling, performance monitoring, and code organization
+
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
-import { token } from './config.js';
+import { token, config, validateConfig } from './config.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,125 +10,245 @@ import http from 'http';
 import NotificationService from './services/notificationService.js';
 import UserDatabaseService from './services/userDatabaseService.js';
 import { VERSION_CONFIG } from './config/version.js';
+import { errorHandler } from './utils/errorHandler.js';
+import { performanceMonitor } from './utils/performanceMonitor.js';
+import { memoryManager } from './utils/memoryManager.js';
 
 // Get the directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Creates a new client object and sets up its list of discord bot intents.
+// Validate configuration before starting
+if (!validateConfig()) {
+    console.error('❌ Configuration validation failed. Exiting...');
+    process.exit(1);
+}
+
+// Create Discord client with optimized intents and options
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.DirectMessageTyping,
-    ]
-})
+    ],
+    // Optimized client options for better performance
+    presence: {
+        status: 'online',
+        activities: [{
+            name: 'UFC fights | /fight',
+            type: 0 // Playing
+        }]
+    },
+    // Discord.js optimization options
+    allowedMentions: {
+        parse: ['users', 'roles'],
+        repliedUser: false
+    },
+    partials: [], // Only enable partials if needed
+    restRequestTimeout: config.api.timeout,
+    restSweepInterval: 60, // Sweep REST cache every 60 seconds
+    restGlobalRateLimit: 50, // Global rate limit (requests per second)
+    retryLimit: config.api.retryAttempts
+});
 
-// Set the clients commands to an empty list.
-// New commands will be added later.
+// Initialize services
 client.commands = new Collection();
-
-// Initialize notification service
 let notificationService;
 let userDB;
 
-/**
- * Dynamically loads command files from the commands directory
- */
-async function loadCommands() {
-    try {
-        // Gets the individual command files from the command directory. 
-        const commandsPath = path.join(__dirname, 'commands');
-        // Filters out all of the non .js files from the directory so we are left with only Javascript command files.
-        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+// Enhanced performance monitoring
+const performanceMetrics = {
+    startTime: Date.now(),
+    commandsLoaded: 0,
+    eventsLoaded: 0,
+    errors: 0,
+    totalMemoryAllocated: 0,
+    peakMemoryUsage: 0
+};
 
-        // For each file in the commands directory 
-        for (const file of commandFiles) {
-            try {
-                const command = (await import(`./commands/${file}`)).default;
-                if (command?.data?.name) {
-                    client.commands.set(command.data.name, command);
-                    console.log(`✅ Loaded command: ${command.data.name}`);
-                } else {
-                    console.warn(`⚠️  Command file ${file} is missing required data or name property`);
-                }
-            } catch (error) {
-                console.error(`❌ Failed to load command ${file}:`, error.message);
-            }
-        }
-    } catch (error) {
-        console.error('❌ Failed to load commands directory:', error.message);
-        process.exit(1);
+/**
+ * Enhanced memory monitoring
+ */
+function updateMemoryMetrics() {
+    const memUsage = process.memoryUsage();
+    performanceMetrics.totalMemoryAllocated = memUsage.heapUsed;
+    if (memUsage.heapUsed > performanceMetrics.peakMemoryUsage) {
+        performanceMetrics.peakMemoryUsage = memUsage.heapUsed;
     }
 }
 
 /**
- * Dynamically loads event files from the events directory
+ * Dynamically loads command files from the commands directory with improved error handling
+ */
+async function loadCommands() {
+    const commandsPath = path.join(__dirname, 'commands');
+    
+    try {
+        // Ensure commands directory exists
+        await fs.promises.access(commandsPath);
+        
+        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+        
+        console.log(`📂 Loading ${commandFiles.length} command files...`);
+
+        // Load commands with Promise.allSettled for better error handling
+        const loadPromises = commandFiles.map(async (file) => {
+            try {
+                const command = (await import(`./commands/${file}`)).default;
+                
+                if (command?.data?.name) {
+                    client.commands.set(command.data.name, command);
+                    performanceMetrics.commandsLoaded++;
+                    return { status: 'fulfilled', file, command: command.data.name };
+                } else {
+                    throw new Error('Missing required data or name property');
+                }
+            } catch (error) {
+                performanceMetrics.errors++;
+                return { status: 'rejected', file, error: error.message };
+            }
+        });
+
+        const results = await Promise.allSettled(loadPromises);
+        
+        // Process results
+        results.forEach(result => {
+            if (result.status === 'fulfilled') {
+                const { file, command } = result.value;
+                console.log(`✅ Loaded command: ${command} (${file})`);
+            } else {
+                const { file, error } = result.value;
+                console.error(`❌ Failed to load command ${file}: ${error}`);
+            }
+        });
+
+        console.log(`✅ Commands loaded: ${performanceMetrics.commandsLoaded}/${commandFiles.length}`);
+        
+    } catch (error) {
+        console.error('❌ Failed to access commands directory:', error.message);
+        throw new Error(`Commands directory not accessible: ${error.message}`);
+    }
+}
+
+/**
+ * Dynamically loads event files from the events directory with improved error handling
  */
 async function loadEvents() {
+    const eventsPath = path.join(__dirname, 'events');
+    
     try {
-        // Gets the individual event files from the events directory. 
-        const eventsPath = path.join(__dirname, 'events');
-        // Filters out all of the non .js files from the directory so we are left with only Javascript event files.
+        // Ensure events directory exists
+        await fs.promises.access(eventsPath);
+        
         const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+        
+        console.log(`📂 Loading ${eventFiles.length} event files...`);
 
-        // For each file in the events directory, set them to the clients commands.
-        for (const file of eventFiles) {
+        // Load events with Promise.allSettled for better error handling
+        const loadPromises = eventFiles.map(async (file) => {
             try {
                 const discordEvent = (await import(`./events/${file}`)).default;
+                
                 if (discordEvent?.name) {
                     if (discordEvent.once) {
                         client.once(discordEvent.name, (...args) => discordEvent.execute(...args));
                     } else {
                         client.on(discordEvent.name, (...args) => discordEvent.execute(...args));
                     }
-                    console.log(`✅ Loaded event: ${discordEvent.name}`);
+                    performanceMetrics.eventsLoaded++;
+                    return { status: 'fulfilled', file, event: discordEvent.name };
                 } else {
-                    console.warn(`⚠️  Event file ${file} is missing required name property`);
+                    throw new Error('Missing required name property');
                 }
             } catch (error) {
-                console.error(`❌ Failed to load event ${file}:`, error.message);
+                performanceMetrics.errors++;
+                return { status: 'rejected', file, error: error.message };
             }
-        }
+        });
+
+        const results = await Promise.allSettled(loadPromises);
+        
+        // Process results
+        results.forEach(result => {
+            if (result.status === 'fulfilled') {
+                const { file, event } = result.value;
+                console.log(`✅ Loaded event: ${event} (${file})`);
+            } else {
+                const { file, error } = result.value;
+                console.error(`❌ Failed to load event ${file}: ${error}`);
+            }
+        });
+
+        console.log(`✅ Events loaded: ${performanceMetrics.eventsLoaded}/${eventFiles.length}`);
+        
     } catch (error) {
-        console.error('❌ Failed to load events directory:', error.message);
-        process.exit(1);
+        console.error('❌ Failed to access events directory:', error.message);
+        throw new Error(`Events directory not accessible: ${error.message}`);
     }
 }
 
 /**
- * Initialize the Discord bot
+ * Initialize the Discord bot with comprehensive error handling and monitoring
  */
 async function initialize() {
+    const initStartTime = Date.now();
+    
     console.log(`🤖 Starting FightBot ${VERSION_CONFIG.version} (All Features FREE!)...`);
+    console.log(`🔧 Environment: ${config.environment}`);
+    console.log(`🚀 Node.js: ${process.version}`);
     
-    // Initialize user database
-    userDB = new UserDatabaseService();
-    await userDB.initialize();
-    console.log('✅ User database initialized');
-    
-    // Make userDB available to the client
-    client.userDB = userDB;
-    
-    // Load commands and events
-    await loadCommands();
-    await loadEvents();
-
-    // Tells the client to login to discord given its token.
     try {
+        // Initialize user database
+        console.log('📊 Initializing user database...');
+        userDB = new UserDatabaseService();
+        const dbInitialized = await userDB.initialize();
+        
+        if (!dbInitialized) {
+            throw new Error('Failed to initialize user database');
+        }
+        
+        // Make userDB available to the client
+        client.userDB = userDB;
+        console.log('✅ User database initialized');
+        
+        // Load commands and events
+        await loadCommands();
+        await loadEvents();
+
+        // Validate that we have at least one command
+        if (client.commands.size === 0) {
+            console.warn('⚠️ No commands loaded - bot will have limited functionality');
+        }
+
+        // Login to Discord
+        console.log('🔐 Logging in to Discord...');
         await client.login(token);
         
         // Initialize notification service after successful login
         notificationService = new NotificationService(client);
         client.notifications = notificationService;
+        console.log('✅ Notification service initialized');
         
-        console.log(`✅ FightBot initialized successfully! All features are FREE! 🎉`);
+        // Calculate initialization time
+        const initTime = Date.now() - initStartTime;
+        performanceMetrics.initializationTime = initTime;
+        
+        console.log(`✅ FightBot initialized successfully in ${initTime}ms! All features are FREE! 🎉`);
+        console.log(`📊 Stats: ${performanceMetrics.commandsLoaded} commands, ${performanceMetrics.eventsLoaded} events, ${performanceMetrics.errors} errors`);
         
         // Start background services
         startBackgroundServices();
+        
     } catch (error) {
-        console.error('❌ Failed to login to Discord:', error.message);
+        console.error('❌ Failed to initialize FightBot:', error.message);
+        console.error('Stack trace:', error.stack);
+        
+        // Attempt graceful shutdown
+        if (client.isReady()) {
+            await client.destroy();
+        }
+        
         process.exit(1);
     }
 }
