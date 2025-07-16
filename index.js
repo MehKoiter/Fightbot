@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import http from 'http';
+import os from 'os';
 import NotificationService from './services/notificationService.js';
 import UserDatabaseService from './services/userDatabaseService.js';
 import { VERSION_CONFIG } from './config/version.js';
@@ -199,14 +200,28 @@ async function initialize() {
     console.log(`🚀 Node.js: ${process.version}`);
     
     try {
-        // Initialize user database
+        // Initialize user database with enhanced error handling
         console.log('📊 Initializing user database...');
-        userDB = new UserDatabaseService();
+        console.log('Environment details:', {
+            NODE_ENV: process.env.NODE_ENV,
+            platform: process.platform,
+            cwd: process.cwd(),
+            homedir: os.homedir()
+        });
+        
+        try {
+            userDB = new UserDatabaseService();
+            console.log('✅ UserDatabaseService instance created');
+        } catch (constructorError) {
+            console.error('❌ Failed to create UserDatabaseService instance:', constructorError.message);
+            throw new Error(`UserDatabaseService constructor failed: ${constructorError.message}`);
+        }
         
         try {
             const dbInitialized = await userDB.initialize();
             
             if (!dbInitialized) {
+                console.warn('⚠️ Database initialization returned false, using fallback service');
                 throw new Error('Database initialization returned false');
             }
             
@@ -215,10 +230,14 @@ async function initialize() {
             console.log('✅ User database initialized successfully');
         } catch (dbError) {
             console.error('❌ Database initialization failed:', dbError.message);
-            console.error('Database error stack:', dbError.stack);
+            console.error('Environment info:', {
+                NODE_ENV: process.env.NODE_ENV,
+                platform: process.platform,
+                cwd: process.cwd()
+            });
             
             // Create a mock database service for graceful degradation
-            console.log('⚠️ Creating fallback database service...');
+            console.log('⚠️ Creating fallback database service due to:', dbError.message);
             client.userDB = {
                 logCommandUsage: async () => console.log('📊 Database unavailable - command usage not logged'),
                 getCommandStats: async () => ({ totalCommands: 0, commandBreakdown: [] }),
@@ -227,6 +246,8 @@ async function initialize() {
                 close: () => {}
             };
             console.log('✅ Fallback database service created - bot will continue with limited analytics');
+            
+            // Don't re-throw the error here - the bot should continue with fallback service
         }
         
         // Load commands and events
@@ -259,11 +280,20 @@ async function initialize() {
         
     } catch (error) {
         console.error('❌ Failed to initialize FightBot:', error.message);
+        console.error('Full error object:', error);
         console.error('Stack trace:', error.stack);
         
+        // Log additional context for debugging
+        console.error('Error occurred during initialization phase');
+        console.error('Performance metrics at failure:', performanceMetrics);
+        
         // Attempt graceful shutdown
-        if (client.isReady()) {
-            await client.destroy();
+        try {
+            if (client.isReady()) {
+                await client.destroy();
+            }
+        } catch (shutdownError) {
+            console.error('❌ Error during shutdown:', shutdownError.message);
         }
         
         process.exit(1);
