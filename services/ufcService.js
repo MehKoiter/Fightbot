@@ -1,9 +1,9 @@
-import axios from 'axios';
-import { FightParser } from './fightParser.js';
+import axios from "axios";
+import { FightParser } from "./fightParser.js";
 
 export default class UfcService {
-  static EVENTS_URL = 'https://www.ufc.com/events';
-  
+  static EVENTS_URL = "https://www.ufc.com/events";
+
   constructor() {
     this.parser = new FightParser();
   }
@@ -22,12 +22,12 @@ export default class UfcService {
    */
   async getUpcomingEvent() {
     try {
-      console.log('🔍 Fetching UFC events...');
-      
+      console.log("🔍 Fetching UFC events...");
+
       // Get the events page
       const eventsHtml = await this.fetchEvents();
       if (!eventsHtml) {
-        console.log('❌ Failed to fetch events page');
+        console.log("❌ Failed to fetch events page");
         return null;
       }
 
@@ -36,14 +36,14 @@ export default class UfcService {
       console.log(`📅 Found ${eventLinks.length} event links`);
 
       if (eventLinks.length === 0) {
-        console.log('❌ No upcoming events found');
+        console.log("❌ No upcoming events found");
         return null;
       }
 
       // Get the next upcoming event
       const upcomingEventLink = this.parser.getNextUpcomingEvent(eventLinks);
       if (!upcomingEventLink) {
-        console.log('❌ No upcoming event link found');
+        console.log("❌ No upcoming event link found");
         return null;
       }
 
@@ -52,26 +52,26 @@ export default class UfcService {
       // Fetch the event details page
       const eventHtml = await this.fetchData(upcomingEventLink);
       if (!eventHtml) {
-        console.log('❌ Failed to fetch event details');
+        console.log("❌ Failed to fetch event details");
         return null;
       }
 
       // Parse the event details
       const event = this.parser.parseEvent(eventHtml);
-      
+
       if (!event) {
-        console.log('❌ Failed to parse event details - no fight data found');
+        console.log("❌ Failed to parse event details - no fight data found");
         return null;
       }
-      
-      console.log(`✅ Successfully parsed event: ${event.title || 'Unknown'}`);
+
+      console.log(`✅ Successfully parsed event: ${event.title || "Unknown"}`);
 
       return {
         ...event,
-        url: upcomingEventLink
+        url: upcomingEventLink,
       };
     } catch (error) {
-      console.error('❌ Error getting upcoming event:', error.message);
+      console.error("❌ Error getting upcoming event:", error.message);
       return null;
     }
   }
@@ -86,16 +86,21 @@ export default class UfcService {
       const res = await axios.get(url, {
         timeout: 8000, // Reduced timeout to 8 seconds
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive'
-        }
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Accept-Encoding": "gzip, deflate, br",
+          Connection: "keep-alive",
+        },
       });
       return res.data;
     } catch (error) {
-      console.error(`❌ Failed to fetch data from ${url}:`, error?.message || error);
+      console.error(
+        `❌ Failed to fetch data from ${url}:`,
+        error?.message || error
+      );
       return undefined;
     }
   }
