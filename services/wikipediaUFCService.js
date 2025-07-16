@@ -302,7 +302,7 @@ export default class WikipediaUFCService {
                         }
                         
                         // Look for fight patterns
-                        if (rowText.includes(' vs ') || rowText.includes(' def. ') || rowText.includes(' defeated ')) {
+                        if (rowText.includes(' vs ') || rowText.includes(' def. ') || rowText.includes(' defeated ') || rowText.includes('def.')) {
                             const cells = $row.find('td, th').map((i, cell) => $(cell).text().trim()).get();
                             
                             if (cells.length >= 2) {
@@ -388,6 +388,31 @@ export default class WikipediaUFCService {
             // [Fighter 1, vs, Fighter 2, Result, Method]
             // [Fighter 1 def. Fighter 2, Method, Round]
             
+            // New format handling: [Weight Class, Winner, "def.", Loser, Method, Round, Time]
+            // Look for "def." as a separate cell
+            const defIndex = cells.findIndex(cell => cell.trim() === 'def.');
+            if (defIndex > 0 && defIndex < cells.length - 1) {
+                const winner = this.cleanFighterName(cells[defIndex - 1]);
+                const loser = this.cleanFighterName(cells[defIndex + 1]);
+                const weightClass = defIndex >= 2 ? cells[defIndex - 2] : null;
+                const method = defIndex + 2 < cells.length ? cells[defIndex + 2] : null;
+                
+                if (winner && loser && winner.length > 1 && loser.length > 1) {
+                    return {
+                        fighters: [
+                            { name: winner },
+                            { name: loser }
+                        ],
+                        winner: winner,
+                        result: 'win',
+                        weightClass: this.cleanWeightClass(weightClass),
+                        method: method,
+                        rawText: cells.join(' ')
+                    };
+                }
+            }
+            
+            // Original logic for other formats
             for (const cell of cells) {
                 if (cell.includes(' vs ') || cell.includes(' def. ') || cell.includes(' defeated ')) {
                     return this.extractFightFromText(cell);
@@ -405,6 +430,35 @@ export default class WikipediaUFCService {
         } catch (error) {
             return null;
         }
+    }
+
+    /**
+     * Clean fighter name by removing extra formatting
+     * @param {string} name - Raw fighter name
+     * @returns {string} Cleaned fighter name
+     */
+    cleanFighterName(name) {
+        if (!name) return '';
+        
+        return name.trim()
+            .replace(/\([^)]*\)/g, '') // Remove parentheses and content
+            .replace(/\[[^\]]*\]/g, '') // Remove brackets and content
+            .replace(/\s+/g, ' ') // Normalize whitespace
+            .trim();
+    }
+
+    /**
+     * Clean weight class text
+     * @param {string} weightClass - Raw weight class
+     * @returns {string} Cleaned weight class
+     */
+    cleanWeightClass(weightClass) {
+        if (!weightClass) return null;
+        
+        return weightClass.trim()
+            .replace(/\([^)]*\)/g, '') // Remove parentheses
+            .replace(/\[[^\]]*\]/g, '') // Remove brackets
+            .trim();
     }
 
     /**
