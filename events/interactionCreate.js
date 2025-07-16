@@ -201,15 +201,23 @@ async function handleAutocomplete(interaction) {
  * @param {ButtonInteraction} interaction - The button interaction
  */
 async function handleButton(interaction) {
+	let emergencyDeferApplied = false;
+	
 	try {
 		// Add timeout protection for button interactions
 		const buttonTimeout = setTimeout(async () => {
-			if (!interaction.replied && !interaction.deferred) {
+			if (!interaction.replied && !interaction.deferred && !emergencyDeferApplied) {
 				try {
 					await interaction.deferReply({ ephemeral: true });
+					emergencyDeferApplied = true;
 					console.log(`✅ Emergency defer applied for button ${interaction.customId}`);
 				} catch (deferError) {
-					console.error(`❌ Failed to apply emergency defer for button:`, deferError.message);
+					// Don't log errors for expired interactions as these are common
+					if (deferError.code === 10062 || deferError.message.includes('Unknown interaction')) {
+						console.log(`⚠️ Emergency defer skipped - interaction ${interaction.customId} has expired`);
+					} else {
+						console.error(`❌ Failed to apply emergency defer for button:`, deferError.message);
+					}
 				}
 			}
 		}, 2500);
@@ -226,8 +234,17 @@ async function handleButton(interaction) {
 		console.error('Button interaction error:', {
 			message: error.message,
 			customId: interaction.customId,
-			user: interaction.user.tag
+			user: interaction.user.tag,
+			errorCode: error.code,
+			isDiscordAPIError: error.code === 10062 || error.message.includes('Unknown interaction')
 		});
+		
+		// Don't try to respond if this is a Discord "Unknown interaction" error
+		// This usually means the interaction has already expired or been acknowledged
+		if (error.code === 10062 || error.message.includes('Unknown interaction')) {
+			console.log(`⚠️ Interaction ${interaction.customId} has expired or already been acknowledged - skipping error response`);
+			return;
+		}
 		
 		const isTimeout = error.message.includes('timeout');
 		const errorMessage = { 
@@ -248,6 +265,7 @@ async function handleButton(interaction) {
  */
 async function sendErrorResponse(interaction, response) {
 	try {
+		// Check if interaction is still valid before attempting to respond
 		if (interaction.isAutocomplete()) {
 			// For autocomplete, response should be an array
 			if (!interaction.responded) {
@@ -264,12 +282,17 @@ async function sendErrorResponse(interaction, response) {
 			}
 		}
 	} catch (responseError) {
-		console.error('Failed to send error response:', {
-			error: responseError.message,
-			interactionType: interaction.type,
-			replied: interaction.replied,
-			deferred: interaction.deferred
-		});
+		// Don't log errors for expired interactions as these are expected in some cases
+		if (responseError.code === 10062 || responseError.message.includes('Unknown interaction')) {
+			console.log(`⚠️ Cannot send error response - interaction has expired or been acknowledged`);
+		} else {
+			console.error('Failed to send error response:', {
+				error: responseError.message,
+				interactionType: interaction.type,
+				replied: interaction.replied,
+				deferred: interaction.deferred
+			});
+		}
 	}
 }
 
@@ -281,6 +304,7 @@ async function handleButtonInteraction(interaction) {
 	const { customId } = interaction;
 	
 	console.log(`🔍 Processing button interaction: ${customId} by ${interaction.user.tag}`);
+	console.log(`🔍 Interaction state - Replied: ${interaction.replied}, Deferred: ${interaction.deferred}, Acknowledged: ${interaction.replied || interaction.deferred}`);
 	
 	// Fighter-related button interactions (Phase 7)
 	if (customId.startsWith('fighter_') || customId.startsWith('comparison_')) {
@@ -300,7 +324,18 @@ async function handleButtonInteraction(interaction) {
 		
 		console.log(`🔍 UFC button - Action: ${action}, DataSource: ${dataSource || 'legacy'}, EventId: ${eventId || 'N/A'}`);
 		
-		await interaction.deferReply({ ephemeral: true });
+		// Check if interaction is already deferred before attempting to defer
+		if (!interaction.deferred && !interaction.replied) {
+			try {
+				await interaction.deferReply({ ephemeral: true });
+			} catch (deferError) {
+				// If defer fails with Unknown interaction, the interaction has expired
+				if (deferError.code === 10062 || deferError.message.includes('Unknown interaction')) {
+					throw new Error('Unknown interaction');
+				}
+				throw deferError;
+			}
+		}
 		
 		let embed;
 		
@@ -343,7 +378,18 @@ async function handleButtonInteraction(interaction) {
 	else if (customId.startsWith('fight_')) {
 		const action = customId.split('_')[1];
 		
-		await interaction.deferReply({ ephemeral: true });
+		// Check if interaction is already deferred before attempting to defer
+		if (!interaction.deferred && !interaction.replied) {
+			try {
+				await interaction.deferReply({ ephemeral: true });
+			} catch (deferError) {
+				// If defer fails with Unknown interaction, the interaction has expired
+				if (deferError.code === 10062 || deferError.message.includes('Unknown interaction')) {
+					throw new Error('Unknown interaction');
+				}
+				throw deferError;
+			}
+		}
 		
 		let embed;
 		
