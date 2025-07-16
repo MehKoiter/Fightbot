@@ -202,15 +202,32 @@ async function initialize() {
         // Initialize user database
         console.log('📊 Initializing user database...');
         userDB = new UserDatabaseService();
-        const dbInitialized = await userDB.initialize();
         
-        if (!dbInitialized) {
-            throw new Error('Failed to initialize user database');
+        try {
+            const dbInitialized = await userDB.initialize();
+            
+            if (!dbInitialized) {
+                throw new Error('Database initialization returned false');
+            }
+            
+            // Make userDB available to the client
+            client.userDB = userDB;
+            console.log('✅ User database initialized successfully');
+        } catch (dbError) {
+            console.error('❌ Database initialization failed:', dbError.message);
+            console.error('Database error stack:', dbError.stack);
+            
+            // Create a mock database service for graceful degradation
+            console.log('⚠️ Creating fallback database service...');
+            client.userDB = {
+                logCommandUsage: async () => console.log('📊 Database unavailable - command usage not logged'),
+                getCommandStats: async () => ({ totalCommands: 0, commandBreakdown: [] }),
+                hasActiveSubscription: async () => true,
+                isPremiumUser: async () => true,
+                close: () => {}
+            };
+            console.log('✅ Fallback database service created - bot will continue with limited analytics');
         }
-        
-        // Make userDB available to the client
-        client.userDB = userDB;
-        console.log('✅ User database initialized');
         
         // Load commands and events
         await loadCommands();

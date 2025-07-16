@@ -5,6 +5,7 @@
 
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,15 +18,38 @@ class UserDatabaseService {
     }
 
     async initialize() {
-        return new Promise((resolve, reject) => {
-            this.db = new sqlite3.Database(this.dbPath, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    this.createTables().then(resolve).catch(reject);
-                }
+        try {
+            // Ensure data directory exists
+            const dataDir = path.dirname(this.dbPath);
+            if (!fs.existsSync(dataDir)) {
+                console.log('📁 Creating data directory...');
+                fs.mkdirSync(dataDir, { recursive: true });
+            }
+
+            return new Promise((resolve, reject) => {
+                console.log(`📊 Connecting to database at: ${this.dbPath}`);
+                this.db = new sqlite3.Database(this.dbPath, (err) => {
+                    if (err) {
+                        console.error('❌ Database connection failed:', err.message);
+                        reject(new Error(`Database connection failed: ${err.message}`));
+                    } else {
+                        console.log('✅ Database connected successfully');
+                        this.createTables()
+                            .then(() => {
+                                console.log('✅ Database initialization completed');
+                                resolve(true);
+                            })
+                            .catch((tableErr) => {
+                                console.error('❌ Table creation failed:', tableErr.message);
+                                reject(new Error(`Table creation failed: ${tableErr.message}`));
+                            });
+                    }
+                });
             });
-        });
+        } catch (error) {
+            console.error('❌ Database initialization error:', error.message);
+            throw new Error(`Database initialization failed: ${error.message}`);
+        }
     }
 
     async createTables() {
